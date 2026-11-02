@@ -1,0 +1,1184 @@
+{
+  "reports": [
+    {
+      "id": "project1",
+      "title": "Project 1 — Clean the Ring",
+      "source": "Screenshot_4.png",
+      "summary": "Omar Zid | Simulated result: 9/9 objects expelled in 175.96 s; robot stopped after a complete empty angular scan. The chassis stayed at least 75.00 mm inside the ring. The forward pusher reaches the boundary exactly, leaving zero extension tolerance in the ideal model.",
+      "sections": [
+        {
+          "heading": "Task, deliverables and declared model",
+          "paragraphs": [
+            "All trials in this report are reproducible software simulations produced for Omar Zid. They are not physical measurements, proof of NXC compilation, or evidence of testing a LEGO robot. Motor B is the left wheel; motor C is the right wheel; the one color/light sensor is S1 and the fixed forward ultrasonic sensor is S4. Wheel diameter D = 56 mm and wheel-center track B = 120 mm are explicit assumed calibration values. Replace them with measured values before a physical demonstration.",
+            "The task is to push every object outside the ring quickly, keep the robot inside, stop when clean, and display a map of ejection locations on the robot screen. The model includes sensing, wheel movement, contact pushing, reverse movement, verification and a small LCD-style map. Objects have radius 20 mm. Ring outer radius is 600 mm, with a black boundary band from radius 580 to 600 mm. The robot is represented by a circular 75 mm chassis and a narrow 150 mm forward pusher. The color sensor is aligned with the pusher tip; S4 is 70 mm forward of the axle center. Initial object centers must be outside a 180 mm staging radius, leaving room for the 150 mm pusher, its 40 mm half-width, and the 20 mm object radius while turning.",
+            "The start is the center with heading 0 rad. Nine separate rigid circular objects form the nominal scene. No object count or object positions are supplied to the controller: it receives ultrasonic distances while turning. Object IDs in the trace label the independent simulated scene for checking and plotting."
+          ],
+          "table": {
+            "headers": [
+              "Quantity",
+              "Value",
+              "Unit / meaning"
+            ],
+            "rows": [
+              [
+                "Outer ring radius",
+                600,
+                "mm"
+              ],
+              [
+                "Black boundary width",
+                20,
+                "mm"
+              ],
+              [
+                "Chassis radius",
+                75,
+                "mm"
+              ],
+              [
+                "Pusher / color offset",
+                150,
+                "mm forward"
+              ],
+              [
+                "Object radius",
+                20,
+                "mm"
+              ],
+              [
+                "Ultrasonic offset",
+                70,
+                "mm forward"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "Search, push, boundary response and clean-stop logic",
+          "paragraphs": [
+            "SEARCH turns the robot through headings 0°–359° in 1° increments and reads one forward range ray at each heading. SELECT chooses the smallest measured surface range, giving a bearing close to the center of the nearest visible object. ALIGN turns to that bearing. PUSH advances at 110 mm/s. A 40 mm half-width pusher captures the selected object when the front makes contact; the object then moves with the front face. The simulation integrates each wheel movement rather than jumping between waypoints.",
+            "The color sensor reaches the inner black edge when the axle is 430 mm from the center. BOUNDARY_FINISH then travels the calibrated 20 mm band width at 40 mm/s, stopping at axle radius 450 mm. The pusher tip is at 600 mm and the object center at 620 mm, so the entire radius-20 mm object is outside or tangent to the ring. RETREAT reverses 450 mm on the same heading to the center. It then searches again. A successful clean stop requires a new complete scan with no object ranges inside the 900 mm search limit; absence of a detection while merely driving is insufficient.",
+            "At the farthest ring radius, adjacent 1° rays are approximately 10.47 mm apart. This is narrower than the 40 mm object diameter. Under the ideal ray, clear staging and minimum object-size assumptions, an unoccluded object cannot hide between samples. Occlusion is handled by repeatedly clearing the nearest visible object and rescanning. An independent test checks the true remaining objects when the controller declares completion. The 32-scan safety cap is a failure budget; it does not use the true initial object count."
+          ]
+        },
+        {
+          "heading": "Calculations with dimensions and units",
+          "paragraphs": [
+            "The calculations distinguish chassis safety from the complete forward extension. A positive chassis margin does not imply a positive pusher margin. In this ideal model the pusher touches the outer border but does not cross it. Encoder distances are calculated from wheel circumference, not from motor percentages."
+          ],
+          "calculations": [
+            "Wheel circumference C = πD = π × 56 mm = 175.929 mm/revolution. Straight wheel travel s = C × encoder_degrees / 360°.",
+            "Travel to first black reading = 580 mm − 150 mm = 430 mm. Finish travel = 600 − 580 = 20 mm. Maximum axle radius = 430 + 20 = 450 mm.",
+            "Chassis margin = 600 − (450 + 75) = 75 mm. Complete forward-extension margin = 600 − (450 + 150) = 0 mm.",
+            "Ejected object center radius = 450 + 150 + 20 = 620 mm; its nearest point is 620 − 20 = 600 mm.",
+            "A 450 mm forward run requires 450 / (π × 56) × 360 = 920.825° per wheel. Nine forward-and-reverse runs cover 9 × 2 × 450 = 8100 mm, matching the exported path 8100.000 mm.",
+            "An in-place 360° turn moves each wheel πB = π × 120 = 376.991 mm in opposite directions: 771.429° per wheel. Angular rate 0.9 rad/s corresponds to wheel speeds ±54 mm/s.",
+            "Angular sampling chord = 2 × 600 mm × sin(0.5°) = 10.472 mm < 40 mm object diameter."
+          ]
+        },
+        {
+          "heading": "Executed validation trials and exported map",
+          "paragraphs": [
+            "The table contains executed trials; the alternate layout and initially empty ring exercise completion logic, not only the nominal arrangement. Time includes actual in-place scan/align rotations, push travel and reverse travel. The empty case stops only after taking all 360 range readings. An empty ring permits stopping even without pushing an object.",
+            "The ejection CSV records object ID, coordinates in mm and simulated time in s. The LCD image represents a 100 × 64 pixel display enlarged five times. Coordinates use u = 50 + 25x/600 and v = 35 − 25y/600. Rounding produces pixel locations; the marker numbers are display labels. Ejection coordinates are derived from encoder pose and assumed contact geometry, so they are estimates of where the push finished rather than an external camera survey."
+          ],
+          "table": {
+            "headers": [
+              "Scene",
+              "Objects out",
+              "Search scans",
+              "Time (s)",
+              "Path (mm)",
+              "Chassis margin (mm)"
+            ],
+            "rows": [
+              [
+                "nominal",
+                "9/9",
+                10,
+                "175.964",
+                "8100.0",
+                "75.0"
+              ],
+              [
+                "dense",
+                "12/12",
+                13,
+                "235.130",
+                "10800.0",
+                "75.0"
+              ],
+              [
+                "empty",
+                "0/0",
+                1,
+                "6.962",
+                "0.0",
+                "525.0"
+              ]
+            ]
+          },
+          "figure": "data/projects/p1_ring.png",
+          "caption": "Computed robot-center trajectory. Brown circles show initial objects, green circles show the ejection coordinates, and the outer circle is the ring boundary."
+        },
+        {
+          "heading": "Ejection coordinate evidence",
+          "paragraphs": [
+            "All nine nominal objects reached center radius 620 mm in this geometric contact model. The object is marked ejected only after that condition is met. The robot subsequently retreats and verifies the remaining ring; it does not stop immediately after the ninth recorded ejection."
+          ],
+          "table": {
+            "headers": [
+              "Object",
+              "x (mm)",
+              "y (mm)",
+              "Radius (mm)",
+              "Ejection time (s)"
+            ],
+            "rows": [
+              [
+                1,
+                "547.43",
+                "291.07",
+                "620.00",
+                "11.93"
+              ],
+              [
+                9,
+                "-191.59",
+                "-589.66",
+                "620.00",
+                "30.01"
+              ],
+              [
+                2,
+                "-547.43",
+                "291.07",
+                "620.00",
+                "50.54"
+              ],
+              [
+                3,
+                "612.37",
+                "-96.99",
+                "620.00",
+                "69.10"
+              ],
+              [
+                4,
+                "-531.44",
+                "-319.32",
+                "620.00",
+                "87.61"
+              ],
+              [
+                5,
+                "64.81",
+                "616.60",
+                "620.00",
+                "107.61"
+              ],
+              [
+                8,
+                "252.18",
+                "-566.40",
+                "620.00",
+                "125.96"
+              ],
+              [
+                6,
+                "547.43",
+                "291.07",
+                "620.00",
+                "143.26"
+              ],
+              [
+                7,
+                "-507.87",
+                "355.62",
+                "620.00",
+                "162.10"
+              ]
+            ]
+          },
+          "figure": "data/projects/p1_nominal_lcd.png",
+          "caption": "Enlarged LCD-style map generated from the ejection coordinates. Every plotted point lies outside the drawn ring."
+        },
+        {
+          "heading": "Limits and physical demonstration procedure",
+          "paragraphs": [
+            "This is a planar kinematic/contact model. It omits motor acceleration, braking travel, pusher flex, object rolling resistance, wheel slip, object-to-object collisions and the real sonar cone. Full expulsion while every part of the robot remains inside is achieved with zero pusher margin. It therefore has no tolerance for a smaller ring, larger forward extension or excess stopping distance. The simulated result must not be presented as physical boundary certification.",
+            "Before use, measure the ring radius, boundary-band width, chassis footprint, pusher offset, object dimensions and sensor position. Calibrate black/white readings at the actual floor height. Verify that the color sensor and pusher can reach the border together, and test braking at the 40 mm/s finish speed. If the teacher defines any contact with the border as leaving, this push geometry needs revision; the current model assumes touching the boundary is allowed. Add a guard timeout, clean-scan repetition and an obstacle-free center requirement for physical tests. Objects smaller than 40 mm, transparent or poorly reflecting objects, sonar blind zones and a center object violate the coverage assumptions.",
+            "Acceptance evidence is p1_nominal_trace.csv, p1_nominal_ejections.csv, p1_dense_trace.csv and p1_empty_trace.csv. The source simulation can be rerun; the assertions detect falsely declaring the ring clean. NXC programs are provided separately and require hardware calibration and a real toolchain check."
+          ]
+        }
+      ],
+      "references": [
+        "Assignment image: Screenshot_4.png — Project 1 Clean the Ring (4h).",
+        "Supplied NXC tutorial and NXC minimum reference, distributed with the source files."
+      ]
+    },
+    {
+      "id": "project2",
+      "title": "Project 2 — SCANNER",
+      "source": "Screenshot_5.png",
+      "summary": "Omar Zid | Simulated scanner counted 14 bars in groups [4, 7, 3] over 5.000 s at 60 mm/s. All 30 noisy phase-varied runs at that speed were correct. Scanner.txt contains appended results; send and receive were verified through an explicitly emulated mailbox.",
+      "sections": [
+        {
+          "heading": "Task, card fixture and sensor model",
+          "paragraphs": [
+            "All trials in this report are reproducible software simulations produced for Omar Zid. They are not physical measurements, proof of NXC compilation, or evidence of testing a LEGO robot. Motor B is the left wheel; motor C is the right wheel; the one color/light sensor is S1 and the fixed forward ultrasonic sensor is S4. Wheel diameter D = 56 mm and wheel-center track B = 120 mm are explicit assumed calibration values. Replace them with measured values before a physical demonstration.",
+            "The supplied task asks for the number of vertical bars with maximum accuracy and minimum working time, for the count/time to appear on screen and be appended to Scanner.txt, and for the sum to be sent to another robot. Each group contains bars with common width, spacing and height; dimensions differ between groups. The simulated card therefore uses three deliberately different groups, with a known 300 mm horizontal fixture travel. The sensor scans at y = 0 mm, through all bars. A single horizontal pass can only count bars intersecting that scan line; different heights do not reveal themselves as extra events.",
+            "Black reflectance is 20 and white reflectance is 80 on a normalized 0–100 scale. A 4 mm rectangular sensing footprint averages covered black and white area along the travel direction. Gaussian sample noise has standard deviation 2 reflectance units. Different random seeds and initial sample phases test repeatability. No bar dimensions or group count enter the count state machine; the known 300 mm fixture length only defines where to stop."
+          ],
+          "table": {
+            "headers": [
+              "Group",
+              "Bars",
+              "Width (mm)",
+              "Gap (mm)",
+              "Height (mm)",
+              "x span (mm)"
+            ],
+            "rows": [
+              [
+                1,
+                4,
+                8,
+                7,
+                35,
+                "20–73"
+              ],
+              [
+                2,
+                7,
+                5,
+                6,
+                55,
+                "108–179"
+              ],
+              [
+                3,
+                3,
+                12,
+                10,
+                25,
+                "214–270"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "Time-sampled counting and grouping algorithm",
+          "paragraphs": [
+            "The scanner samples every 0.010 s. WHITE transitions to BLACK only after three consecutive readings below 35. That stable transition increments the total exactly once. BLACK transitions back to WHITE after three consecutive readings above 65. Readings between 35 and 65 keep the current state and reset the pending confirmation. This hysteresis rejects small fluctuations, and three-sample confirmation rejects a single noisy sample. A wide black bar cannot be counted repeatedly while the sensor remains over it.",
+            "The optional group display starts a new group when the white distance between confirmed transitions exceeds 22 mm. The card has 35 mm between groups and 6–10 mm within groups; hence the threshold separates these cases. Total bar counting does not rely on grouping. All 14 bars pass through the same scan line even though their heights differ. A separate y = 18 mm test intentionally misses the 35 mm-high and 25 mm-high groups because their half-heights are 17.5 and 12.5 mm; this is a geometric failure, not a counter defect.",
+            "Elapsed time is sampled work time from the first acquisition to the stopping sample; it excludes setup and calibration. The nominal result is formatted as a screen/count-time record and appended using file append mode. A second run appends another record, preserving the first. The message COUNT=14;TIME_MS=... is placed in an in-process mailbox and read by a second receiver function. This demonstrates payload formatting and matching send/receive values. It does not demonstrate a Bluetooth radio, pairing, packet reliability or a second physical brick."
+          ]
+        },
+        {
+          "heading": "Sampling calculations and speed selection",
+          "paragraphs": [
+            "Counting accuracy depends on usable dark and white duration, not only on a threshold. A coarse speed can skip a narrow bar entirely or provide fewer than three confirmed samples. The 90 mm/s tests show that a theoretical no-noise bound does not guarantee a robust noisy run. The selected 60 mm/s speed retains additional sampling margin and takes less time than 40 mm/s."
+          ],
+          "calculations": [
+            "Sample displacement = v × Δt. At 60 mm/s × 0.010 s = 0.600 mm/sample. A 5 mm bar spans approximately 8.33 samples before footprint/threshold effects.",
+            "With black = 20, white = 80 and entry threshold 35, the required black coverage fraction is (80 − 35)/(80 − 20) = 0.75. For a 4 mm footprint, 3 mm must be black.",
+            "For the 5 mm narrowest bar, the ideal below-threshold x interval is 5 − 4/2 = 3 mm. Its duration at 60 mm/s is 3/60 = 0.050 s, giving about five samples for a three-sample debounce.",
+            "A conservative noiseless phase-independent entry bound is v ≤ usable_width/(3Δt) = 3 mm/(3 × 0.010 s) = 100 mm/s. Noise and threshold uncertainty justify choosing 60 mm/s; the experiment independently tests that decision.",
+            "At 300 mm/s, displacement is 3 mm/sample. A 3 mm usable dark interval yields about one sample, below the required three. Missed bars are therefore expected.",
+            "Nominal travel time = 300 mm / 60 mm/s = 5.000 s. The executed sampled acquisition is 5.000 s because it includes the final 10 ms stopping sample.",
+            "At 60 mm/s, each wheel turns at 60/(π × 56) × 360 = 122.777°/s. The full 300 mm span requires 613.883° per wheel."
+          ]
+        },
+        {
+          "heading": "Repeated noisy trials and deliberate failure test",
+          "paragraphs": [
+            "Thirty runs at each speed use seeds 0–29 and phase offsets spanning one sample period. Every result below is generated from the state machine and noise model. Accuracy is the fraction of runs whose total equals 14, not an assertion that physical hardware has the same reliability. The high-speed trials are retained as failure evidence."
+          ],
+          "table": {
+            "headers": [
+              "Speed (mm/s)",
+              "Correct / runs",
+              "Min count",
+              "Max count",
+              "Work time (s)",
+              "Accuracy (%)"
+            ],
+            "rows": [
+              [
+                40.0,
+                "30/30",
+                14,
+                14,
+                "7.510",
+                "100.0"
+              ],
+              [
+                60.0,
+                "30/30",
+                14,
+                14,
+                "5.010",
+                "100.0"
+              ],
+              [
+                90.0,
+                "28/30",
+                13,
+                14,
+                "3.340",
+                "93.3"
+              ],
+              [
+                150.0,
+                "0/30",
+                7,
+                9,
+                "2.000",
+                "0.0"
+              ],
+              [
+                300.0,
+                "0/30",
+                1,
+                3,
+                "1.000",
+                "0.0"
+              ]
+            ]
+          },
+          "figure": "data/projects/p2_reflectance.png",
+          "caption": "Actual nominal sampled reflectance and accumulated count. The count is multiplied by 5 only to make both traces visible on one scale."
+        },
+        {
+          "heading": "Files, receiver evidence and mounting sensitivity",
+          "paragraphs": [
+            "Scanner.txt is regenerated as a deterministic demonstration file at the beginning of the simulation, then the two trial records are appended with append mode. Re-running the entire simulation rebuilds the demonstrator; this is separate from continuously preserving a physical brick file across power cycles. The full p2_trials.csv contains all 150 counts, speeds, sample phases and seeds, and p2_nominal_trace.csv contains every sensor reading and state transition.",
+            "At y = 18 mm, the executed mounting-offset test counted 7 bars rather than 14. That value is expected because only the 55 mm-high middle group intersects the scan line. A teacher demonstration should first show the centered successful pass, then show the speed and mounting failures to explain the measurement limits."
+          ],
+          "table": {
+            "headers": [
+              "Sender payload",
+              "Receiver payload",
+              "Match",
+              "Transport"
+            ],
+            "rows": [
+              [
+                "COUNT=14;TIME_MS=5000",
+                "COUNT=14;TIME_MS=5000",
+                "Yes",
+                "Emulated mailbox"
+              ],
+              [
+                "COUNT=14;TIME_MS=7500",
+                "COUNT=14;TIME_MS=7500",
+                "Yes",
+                "Emulated mailbox"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "Physical checks and conclusions",
+          "paragraphs": [
+            "The recommended simulated configuration gives 14 bars in three groups, 4 + 7 + 3 = 14, while preserving count/time records and transmitting a matching payload in software. The elapsed work time does not include Bluetooth connection setup or receiver latency. No real radio latency or loss is claimed.",
+            "For physical commissioning, measure the narrowest bar and gap with a ruler, check the sensor footprint at its mounting height, calibrate thresholds over actual black and white card, and ensure the scan line intersects the shortest bar. Check straightness with both wheel encoders and reduce speed until three stable samples are available under real noise. Confirm scanner file open/append/close behavior and a real receiver acknowledgment after pairing. The finite ray/footprint model omits uneven illumination, glossy print, motor drift, vibration, torn bars and communication failures. A white end region is not itself proof that every bar has been scanned; the known fixture travel provides that condition here."
+          ]
+        }
+      ],
+      "references": [
+        "Assignment image: Screenshot_5.png — Project 2 SCANNER (4h).",
+        "Supplied NXC tutorial and NXC minimum reference, distributed with the source files."
+      ]
+    },
+    {
+      "id": "project3",
+      "title": "Project 3 — Obstacle Avoidance",
+      "source": "Screenshot_6.png",
+      "summary": "Omar Zid | Configurable N = 160 cm trial reached x = 1600.00 mm, y ≈ 0 mm after avoiding two unknown rectangles. Route length was 2840.00 mm. Minimum clearance of the complete circular chassis was 35.00 mm, and simulated time including physical probing turns was 247.64 s.",
+      "sections": [
+        {
+          "heading": "Task and endpoint definition",
+          "paragraphs": [
+            "All trials in this report are reproducible software simulations produced for Omar Zid. They are not physical measurements, proof of NXC compilation, or evidence of testing a LEGO robot. Motor B is the left wheel; motor C is the right wheel; the one color/light sensor is S1 and the fixed forward ultrasonic sensor is S4. Wheel diameter D = 56 mm and wheel-center track B = 120 mm are explicit assumed calibration values. Replace them with measured values before a physical demonstration.",
+            "The assignment requests forward progress of configurable N cm while avoiding one or more parallelepiped obstacles of unknown size and keeping close to the original straight line. This report defines the requested endpoint as x = 10N mm on the original y = 0 mm line. The total curved/detour route is a separate measurement. Stopping after only N cm of wheel travel would end short of the requested forward endpoint when obstacles require detours.",
+            "The environment is a planar top view of rigid rectangles. The controller is given N, its start pose and encoder calibration. Rectangle coordinates are known only to the simulated sensor and collision checker; the controller does not read their widths, heights, near edges or far edges. The robot has a circular collision footprint of radius 75 mm. The ultrasonic sensor lies 70 mm forward of the axle and is fixed to the chassis. To probe a side wall, the whole robot stops and rotates, takes a forward measurement, and rotates back. Those turns consume time and appear in the wheel trace."
+          ]
+        },
+        {
+          "heading": "Measured-corner avoidance state machine",
+          "paragraphs": [
+            "FORWARD advances in 10 mm steps with encoder heading feedback while the forward range exceeds 200 mm. If range is at most 200 mm, TURN_RIGHT rotates to −90°. FIND_NEAR_CORNER moves south in 25 mm increments. Between steps, a real simulated chassis rotation faces east and probes the obstacle; it then restores the south heading. Once the east ray becomes clear, the robot travels a further 110 mm south before turning east. This margin consists of the 75 mm chassis radius plus 35 mm clearance.",
+            "FOLLOW_SIDE progresses east in 25 mm steps, with chassis rotations to probe north. It must first observe a wall and later observe that wall has ended; an initially clear north reading is insufficient to declare the far corner. After the far-corner observation, it travels another 110 mm east, turns north, and uses encoder y to return to y = 0. It turns east and resumes forward progress. Heading feedback applies ω = clamp[4(θtarget − θodo), −0.7, +0.7] rad/s; straight speed is 120 mm/s and detour speed is 100 mm/s.",
+            "Search budgets prevent endless movement when the assumed geometry fails: at most 80 near-corner increments and 100 side increments. Such a timeout is reported as failure, not a successful avoidance. The modeled scenes have isolated convex rectangles and enough clear ground below them. Turning is safe here because the collision footprint is circular; a long real chassis needs a swept-footprint check."
+          ]
+        },
+        {
+          "heading": "Odometry, unit conversions and safety calculations",
+          "paragraphs": [
+            "Wheel increments produce both the true kinematic pose and independent encoder odometry. With no slip or encoder quantization in these baseline trials, they coincide. Each interval uses the exact constant-wheel-speed differential-drive arc; small-angle straight movement is handled separately. Heading is in radians internally and encoder rotation is in degrees."
+          ],
+          "calculations": [
+            "N_mm = 10 × N_cm. For N = 160 cm, endpoint x = 1600 mm. This does not constrain total route length to 1600 mm.",
+            "ΔsL = πD × ΔencoderL/360; ΔsR = πD × ΔencoderR/360. Δs = (ΔsR + ΔsL)/2; Δθ = (ΔsR − ΔsL)/B.",
+            "For Δθ ≠ 0: xnew = x + (Δs/Δθ)[sin(θ+Δθ) − sin θ]; ynew = y − (Δs/Δθ)[cos(θ+Δθ) − cos θ].",
+            "The first nominal front face is x = 420 mm. A 200 mm range from a sensor 70 mm forward corresponds to center x ≈ 420 − 200 − 70 = 150 mm. Chassis-front clearance before turning is 420 − 150 − 75 = 195 mm.",
+            "Required side center spacing is 75 + 35 = 110 mm. The chassis clearance is distance(center, rectangle) − 75 mm; center distance by itself would overstate safety by 75 mm.",
+            "Nominal path excess = 2840 − 1600 = 1240 mm; route/forward-progress ratio = 1.775.",
+            "One wheel encoder degree corresponds to π × 56/360 = 0.4887 mm. A 1° differential error between wheels changes estimated heading by 0.4887/120 = 0.004072 rad = 0.2333°. Over 1.6 m, an uncompensated constant 0.2333° heading error gives about 6.51 mm lateral drift."
+          ]
+        },
+        {
+          "heading": "Executed scenarios and complete-chassis clearance",
+          "paragraphs": [
+            "The nominal two-obstacle scene has rectangles x = 420–650 mm, y = −100–100 mm and x = 1050–1250 mm, y = −180–80 mm. The alternate wide/tall scene has x = 400–710 mm, y = −240–120 mm and adds uniform ultrasonic noise within ±2 mm. These dimensions are disclosed for validation and reproduction; the controller discovers the corners from range transitions. The clear-path case confirms N can change without changing the control algorithm.",
+            "Clearance is evaluated over every simulated trace sample, including physical probing rotations. All recorded chassis clearances exceed 30 mm. The simulator uses exact local arcs with a maximum moving step of 2.4 mm. The nominal minimum 35 mm occurs in a straight segment parallel to the obstacle, so the reported minimum is not merely a distance from a few waypoint vertices. The circular body can rotate in place without increasing its footprint."
+          ],
+          "table": {
+            "headers": [
+              "Trial",
+              "N (cm)",
+              "Endpoint (mm)",
+              "Path (mm)",
+              "Min clearance (mm)",
+              "Time (s)"
+            ],
+            "rows": [
+              [
+                "two_obstacles",
+                160,
+                "(1600.0, 0.0)",
+                "2840.0",
+                "35.0",
+                "247.64"
+              ],
+              [
+                "wide_tall",
+                120,
+                "(1200.0, 0.0)",
+                "1920.0",
+                "45.0",
+                "151.03"
+              ],
+              [
+                "clear",
+                80,
+                "(800.0, 0.0)",
+                "800.0",
+                "No obstacles",
+                "6.67"
+              ]
+            ]
+          },
+          "figure": "data/projects/p3_route.png",
+          "caption": "Actual wheel-integrated trajectory. Shaded rectangles are the unknown-size objects in the sensor environment; the gray horizontal trace is the original y = 0 line."
+        },
+        {
+          "heading": "Performance tradeoffs and exported observations",
+          "paragraphs": [
+            "The nominal maximum lateral displacement was 310.0 mm. The robot returns to the original line after each obstacle rather than continuing a parallel offset to the end. This is a feasible conservative strategy; the report does not claim it is the global shortest route or the fastest possible avoidance. The 247.64 s runtime is dominated by rotating a fixed sonar to take side measurements. A movable sensor or additional side sensor would reduce this overhead but would change the hardware assumption.",
+            "The CSV trace includes time, true x/y, encoder x/y, heading, both wheel degrees, commanded speed/angular rate, state and chassis clearance. The separate sonar CSV contains every forward and side-probe reading with time and pose. The +∞ no-return condition is encoded as the modeled 2550 mm out-of-range reading. Because this is a ray sensor, a rectangle edge produces a sharp change from a finite range to no return; a real ultrasonic cone will produce a broader transition.",
+            "The one-noisy-trial example is a deterministic sensitivity check, not a statistical physical reliability claim. Encoder calibration bias, wheel slip, an obstacle moving during a scan and nonrectangular or concave shapes require additional tests. An obstacle too near the final endpoint can force an overshooting detour; the simulation treats that as a failure of the configured route instead of claiming successful N progress."
+          ]
+        },
+        {
+          "heading": "Physical readiness and acceptance criteria",
+          "paragraphs": [
+            "Before a classroom hardware demonstration, measure the full footprint and sensor offset; calibrate encoder distance and turn direction; verify zero range versus out-of-range handling; and test braking before the 200 mm threshold. Use heading correction only after wheel directions are confirmed. Validate the detection threshold under the actual sonar beam cone and permit additional clearance for noise and braking.",
+            "A physical run passes when the requested endpoint is reached near y = 0, no part of the chassis contacts any obstacle, the avoidance does not use manually entered obstacle dimensions, and a log shows both endpoint progress and total route length. The provided simulation passes those geometric checks under its stated assumptions. Its near-zero endpoint error is the expected consequence of ideal encoders and no slip, not an attainable measured accuracy claim for a real NXT. The separately provided NXC implementation follows the same sensing principle but has not been executed by this Python model."
+          ]
+        }
+      ],
+      "references": [
+        "Assignment image: Screenshot_6.png — Project 3 Obstacle Avoidance (6h).",
+        "Supplied NXC tutorial and NXC minimum reference, distributed with the source files."
+      ]
+    },
+    {
+      "id": "project4",
+      "title": "Project 4 — Single-Sensor PID Line Follower",
+      "source": "Screenshot_7.png",
+      "summary": "Omar Zid | Simulated PID completed one marker-to-marker lap in 20.880 s. Sensor-edge RMS error was 0.639 mm, compared with 1.712 mm for P and 0.782 mm for PI. Wheel dynamics, saturation, noise, bias and a repeatable heading disturbance are included.",
+      "sections": [
+        {
+          "heading": "Task, track geometry and one-sensor observation",
+          "paragraphs": [
+            "All trials in this report are reproducible software simulations produced for Omar Zid. They are not physical measurements, proof of NXC compilation, or evidence of testing a LEGO robot. Motor B is the left wheel; motor C is the right wheel; the one color/light sensor is S1 and the fixed forward ultrasonic sensor is S4. Wheel diameter D = 56 mm and wheel-center track B = 120 mm are explicit assumed calibration values. Replace them with measured values before a physical demonstration.",
+            "The assignment requires a robot with only one color sensor to follow a line for one round using PID regulation. The software test uses a circular black line of centerline radius 350 mm and width 20 mm, so its inner and outer edges are radii 340 and 360 mm. The sensor is 35 mm ahead of the axle. The robot follows the outer edge at target reflectance 50, between calibrated black 20 and white 80. A smooth 2 mm edge transition models the sensor footprint. The reading has Gaussian noise σ = 1.2 reflectance units and a slow ±1.2-unit lighting drift.",
+            "A broad 18 mm transverse black marker crosses the normal line once per circuit. The starting pose aligns the same forward sensor with this marker. Initial marker readings cannot end the run. Lap detection is armed only after encoder path exceeds 1500 mm; after arming, ten consecutive 10 ms readings below 25 trigger braking. The marker is wider than normal transient dark readings and its expected dwell is about 0.164 s at 110 mm/s. No second color sensor or hidden ground-truth track angle controls termination.",
+            "The independent checker unwraps the true polar angle of the axle center and verifies that angular travel is at least 2π rad. That measurement validates the result after the controller stops; it is not supplied to PID or the stop condition. The start-marker alignment matters because a forward sensor crosses the finish before the axle center reaches the same position. Starting with the sensor on the marker makes the next encounter a full sensor-to-sensor circuit."
+          ]
+        },
+        {
+          "heading": "Time-discrete PID, saturation and anti-windup",
+          "paragraphs": [
+            "Error is e = (reading − 50)/30, a dimensionless normalized reflectance difference. Positive error means the outer-edge sensor is too far onto white; the command turns left to return toward black. Integral state I accumulates eΔt in seconds, and the derivative has units s⁻¹. A first-order filtered derivative is d[k] = 0.80d[k−1] + 0.20(e[k] − e[k−1])/Δt. This reduces differentiation of sample noise.",
+            "The PID command is ω = Kp e + Ki I + Kd d, in rad/s. Integral state is clamped to ±2 s, and conditional integration rejects a proposed update if the command is saturated and the current error would drive it further into saturation. During the broad marker, the previous angular command is held and integration is frozen so the marker does not produce a steering kick. At startup the known entry command is 0.31 rad/s while the sensor leaves the marker.",
+            "Base translational command is 110 mm/s. Wheel commands are vL = 110 − 60ω and vR = 110 + 60ω mm/s. Angular command is limited to ±1.1667 rad/s, and wheel commands to −50–180 mm/s. Each motor follows a first-order lag τ = 0.10 s. The right motor produces 97% of its command, introducing a repeatable speed bias. At t = 8.00 s an external 8° heading disturbance is injected into the true pose; encoder heading does not observe this bump. The color feedback must recover."
+          ],
+          "table": {
+            "headers": [
+              "Controller",
+              "Kp (s⁻¹)",
+              "Ki (s⁻²)",
+              "Kd",
+              "Sample period (s)",
+              "Filter"
+            ],
+            "rows": [
+              [
+                "P",
+                0.85,
+                0.0,
+                0.0,
+                0.01,
+                "0.80 / 0.20"
+              ],
+              [
+                "PI",
+                0.7,
+                0.28,
+                0.0,
+                0.01,
+                "0.80 / 0.20"
+              ],
+              [
+                "PID",
+                0.8,
+                0.25,
+                0.035,
+                0.01,
+                "0.80 / 0.20"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "Worked geometry and gain-unit calculations",
+          "paragraphs": [
+            "Radians are treated as dimensionless in the unit table: Kp produces rad/s per normalized error, Ki rad/s² per normalized accumulated error, and Kd rad per normalized derivative. These numerical gains are valid for the defined normalization, 10 ms loop and wheel-speed mapping; copying them into a raw 0–100 reflectance or motor-percentage loop changes the controller.",
+            "Tracking error is the actual sensor-point radius minus the outer edge radius, in mm. It is computed from the independent simulated pose for evaluation. PID itself receives only reflectance. Because the sensor lies ahead of the axle, axle radius 360 mm is not the zero sensor-error trajectory."
+          ],
+          "calculations": [
+            "Zero-error axle radius = √(360² − 35²) = 358.295 mm.",
+            "Desired circular angular rate at nominal speed ≈ 110/358.295 = 0.3070 rad/s. Corresponding wheel speeds are 110 ± 60 × 0.3070 = 91.58 and 128.42 mm/s.",
+            "For reading 56: e = (56 − 50)/30 = 0.20. If I = 0.40 s and filtered derivative d = 0.50 s⁻¹, PID command = 0.80 × 0.20 + 0.25 × 0.40 + 0.035 × 0.50 = 0.2775 rad/s.",
+            "For that worked command, vL = 110 − 60 × 0.2775 = 93.35 mm/s and vR = 126.65 mm/s. Encoder speeds are 191.02 and 259.16 degrees/s respectively for 56 mm wheels.",
+            "Angular saturation = (180 − 110)/(120/2) = 1.1667 rad/s. Integral clamp |I| ≤ 2 s prevents an integral term larger than 0.25 × 2 = 0.50 rad/s in PID.",
+            "Expected marker dwell = 18 mm/110 mm/s ≈ 0.164 s. Required dark confirmation = 10 × 0.010 = 0.100 s, leaving about 64 ms nominal margin.",
+            "Reference axle-circle circumference = 2π × 358.295 = 2251.23 mm; actual route is measured from wheel increments and varies with tracking error, startup and stop location."
+          ]
+        },
+        {
+          "heading": "P, PI and PID executed comparison",
+          "paragraphs": [
+            "Each comparison uses the same starting geometry, random seed, wheel lag, 3% right-motor command bias, lighting drift and 8° heading disturbance. Only controller gains change. Error statistics include samples after the first second and exclude the broad marker, where the sensor reading intentionally represents the finish stripe instead of the normal edge. Maximum error is the largest absolute sensor-edge error in that evaluation interval.",
+            "P requires a steady reflectance error to create the sustained turn and counter the motor bias. PI reduces that steady error but its integral responds more slowly to a sudden heading disturbance. PID adds a filtered derivative and achieved the smallest RMS error in this selected scene. Its maximum transient error can still exceed P even when its overall RMS is lower; a low RMS is not a guarantee of minimum peak error. These gains are compared within one specified track, not claimed optimal for every path."
+          ],
+          "table": {
+            "headers": [
+              "Mode",
+              "Lap time (s)",
+              "RMS (mm)",
+              "Peak (mm)",
+              "Mean (mm)",
+              "Saturated samples"
+            ],
+            "rows": [
+              [
+                "P",
+                "20.960",
+                "1.712",
+                "3.890",
+                "1.605",
+                0
+              ],
+              [
+                "PI",
+                "20.880",
+                "0.782",
+                "5.674",
+                "0.123",
+                0
+              ],
+              [
+                "PID",
+                "20.880",
+                "0.639",
+                "5.270",
+                "0.176",
+                6
+              ]
+            ]
+          },
+          "figure": "data/projects/p4_error.png",
+          "caption": "Computed sensor-edge error over time. The external heading disturbance occurs at 8.00 s. Marker samples are omitted from these error curves."
+        },
+        {
+          "heading": "One-lap evidence, trajectory and trace",
+          "paragraphs": [
+            "PID stopped after 20.880 s and 2256.36 mm of integrated wheel travel. Independent axle angular travel was 6.29179 rad, at least 2π = 6.28319 rad. The controller used its armed single-sensor marker detector for this stop. It did not stop after a fixed guessed lap time or when a precomputed angle became 360°.",
+            "The full p4_pid_trace.csv contains time, robot and encoder pose, wheel degrees, reflectance, normalized error, integral, angular command, both actual wheel speeds, saturation flags, marker flags, sensor-edge error and independent lap angle. The P and PI traces have the same schema for checking the comparison. Ground-truth error and lap angle are evaluation columns; they are not feedback inputs.",
+            "A unique finish marker and a simple track without branches or shortcuts are assumptions of this one-sensor method. Encoder arming rejects the initial marker but cannot mathematically prove a full lap on any unknown track. For a course with repeated black patches, intersections or a shorter loop, the arming distance and marker design must be changed and independently checked."
+          ],
+          "figure": "data/projects/p4_lap.png",
+          "caption": "Actual PID axle-center trajectory, with the inner and outer black-stripe edges drawn at 340 and 360 mm radius."
+        },
+        {
+          "heading": "Hardware tuning and model limits",
+          "paragraphs": [
+            "For physical use, mount the one sensor 35 mm ahead at consistent height, measure black/white calibration, set the sensor on the intended edge, and confirm that positive correction turns toward black. Start with low forward power and Ki = Kd = 0; increase Kp until tracking is responsive, then add a small derivative to reduce overshoot and a small integral only if sustained bias remains. Keep the loop period fixed and include the real Δt in integral and derivative calculations. Motor percentages require measured speed conversion before these mm/s gains can be reused.",
+            "The simulation includes realistic control complications but remains a planar model: it omits stiction, battery changes, cable drag, uneven floors, sensor spectral behavior, wheel slip and noncircular sharp track corners. Braking at the finish is idealized. The intentional heading bump demonstrates recovery in this model and is not a measured bump test on hardware. A real lap should be timed separately, its sensor log saved, and its completion observed by the teacher. The computed gains and traces supply a reproducible starting point rather than physical performance certification."
+          ]
+        }
+      ],
+      "references": [
+        "Assignment image: Screenshot_7.png — Project 4 LineFollower (6h).",
+        "Supplied NXC tutorial and NXC minimum reference, distributed with the source files.",
+        "Assignment-supplied PID help link: http://www.inpharmix.com/jps/PID_Controller_For_Lego_Mindstorms_Robots.html (reference link reproduced from the brief; not a measured hardware source)."
+      ]
+    }
+  ],
+  "results": {
+    "ring": [
+      {
+        "tag": "nominal",
+        "object_count": 9,
+        "expelled": 9,
+        "clean_stop": true,
+        "time_s": 175.9643748164481,
+        "path_mm": 8099.999999999602,
+        "verification_degrees": 360,
+        "scans": 10,
+        "min_entire_robot_margin_mm": 0.0,
+        "min_chassis_margin_mm": 75.0,
+        "ejections": [
+          {
+            "id": 1,
+            "x_mm": 547.4275075725362,
+            "y_mm": 291.07236892725274,
+            "time_s": 11.933399239910818
+          },
+          {
+            "id": 9,
+            "x_mm": -191.5905365124685,
+            "y_mm": -589.6550401029978,
+            "time_s": 30.013317578634982
+          },
+          {
+            "id": 2,
+            "x_mm": -547.4275075725355,
+            "y_mm": 291.07236892725444,
+            "time_s": 50.53669687015255
+          },
+          {
+            "id": 3,
+            "x_mm": 612.366771168985,
+            "y_mm": -96.98936832494424,
+            "time_s": 69.10142888998661
+          },
+          {
+            "id": 4,
+            "x_mm": -531.4437264353103,
+            "y_mm": -319.32360644423454,
+            "time_s": 87.60798326808434
+          },
+          {
+            "id": 5,
+            "x_mm": 64.8076472259456,
+            "y_mm": 616.6035751283317,
+            "time_s": 107.60776378399926
+          },
+          {
+            "id": 8,
+            "x_mm": 252.17671870699698,
+            "y_mm": -566.3981837384162,
+            "time_s": 125.95917778414527
+          },
+          {
+            "id": 6,
+            "x_mm": 547.4275075725352,
+            "y_mm": 291.0723689272548,
+            "time_s": 143.26339423310083
+          },
+          {
+            "id": 7,
+            "x_mm": -507.87426745917526,
+            "y_mm": 355.6173905376487,
+            "time_s": 162.09962191436472
+          }
+        ],
+        "initial": [
+          [
+            195,
+            105
+          ],
+          [
+            -210,
+            112
+          ],
+          [
+            260,
+            -40
+          ],
+          [
+            -270,
+            -160
+          ],
+          [
+            35,
+            320
+          ],
+          [
+            350,
+            190
+          ],
+          [
+            -340,
+            240
+          ],
+          [
+            150,
+            -330
+          ],
+          [
+            -70,
+            -220
+          ]
+        ]
+      },
+      {
+        "tag": "dense",
+        "object_count": 12,
+        "expelled": 12,
+        "clean_stop": true,
+        "time_s": 235.12983683272103,
+        "path_mm": 10800.000000000387,
+        "verification_degrees": 360,
+        "scans": 13,
+        "min_entire_robot_margin_mm": 0.0,
+        "min_chassis_margin_mm": 75.0,
+        "ejections": [
+          {
+            "id": 1,
+            "x_mm": 620.0000000000002,
+            "y_mm": -1.5185620309427186e-13,
+            "time_s": 11.390407917068144
+          },
+          {
+            "id": 10,
+            "x_mm": -75.55899291119145,
+            "y_mm": -615.3786140176202,
+            "time_s": 28.714016913261457
+          },
+          {
+            "id": 6,
+            "x_mm": -514.0032949841241,
+            "y_mm": 346.6996001518641,
+            "time_s": 48.90772290162426
+          },
+          {
+            "id": 5,
+            "x_mm": -281.4741098385183,
+            "y_mm": 552.4240449967868,
+            "time_s": 69.48927983487397
+          },
+          {
+            "id": 11,
+            "x_mm": 232.25608791786544,
+            "y_mm": -574.8539898314114,
+            "time_s": 88.51943298856987
+          },
+          {
+            "id": 2,
+            "x_mm": 542.2642184264276,
+            "y_mm": 300.5819645527295,
+            "time_s": 105.88182707924955
+          },
+          {
+            "id": 9,
+            "x_mm": -364.4268564213374,
+            "y_mm": -501.59053651246563,
+            "time_s": 124.33020381561745
+          },
+          {
+            "id": 7,
+            "x_mm": -617.6407128168859,
+            "y_mm": 54.036560503550724,
+            "time_s": 145.64867754416073
+          },
+          {
+            "id": 4,
+            "x_mm": 21.6376879555584,
+            "y_mm": 619.62231275184,
+            "time_s": 166.23023447741974
+          },
+          {
+            "id": 12,
+            "x_mm": 481.83049610332415,
+            "y_mm": -390.17864245090044,
+            "time_s": 184.13561989095282
+          },
+          {
+            "id": 3,
+            "x_mm": 328.5499438245906,
+            "y_mm": 525.7898196169795,
+            "time_s": 201.498013981643
+          },
+          {
+            "id": 8,
+            "x_mm": -561.9108279627269,
+            "y_mm": -262.02332227923443,
+            "time_s": 221.07115845819374
+          }
+        ],
+        "initial": [
+          [
+            320.0,
+            0.0
+          ],
+          [
+            279.27824244664043,
+            156.2167190025304
+          ],
+          [
+            167.47710440052785,
+            272.67456702379616
+          ],
+          [
+            13.051203597309131,
+            319.7337424868723
+          ],
+          [
+            -144.69637188509182,
+            285.4171683050815
+          ],
+          [
+            -265.61713127527105,
+            178.45878956525343
+          ],
+          [
+            -318.9354130291349,
+            26.080688563286117
+          ],
+          [
+            -291.0811287545422,
+            -132.9352341667988
+          ],
+          [
+            -189.14349977057003,
+            -258.11767954663696
+          ],
+          [
+            -39.0667724087787,
+            -317.60634013438823
+          ],
+          [
+            120.95287766815368,
+            -296.2606983448744
+          ],
+          [
+            250.18869174643805,
+            -199.5134544891793
+          ]
+        ]
+      },
+      {
+        "tag": "empty",
+        "object_count": 0,
+        "expelled": 0,
+        "clean_stop": true,
+        "time_s": 6.961924460732933,
+        "path_mm": 0.0,
+        "verification_degrees": 360,
+        "scans": 1,
+        "min_entire_robot_margin_mm": 450,
+        "min_chassis_margin_mm": 525.0,
+        "ejections": [],
+        "initial": []
+      }
+    ],
+    "scanner": {
+      "trials": [
+        {
+          "speed_mm_s": 40.0,
+          "correct": 30,
+          "runs": 30,
+          "min_count": 14,
+          "max_count": 14,
+          "time_s": 7.509999999999884
+        },
+        {
+          "speed_mm_s": 60.0,
+          "correct": 30,
+          "runs": 30,
+          "min_count": 14,
+          "max_count": 14,
+          "time_s": 5.009999999999938
+        },
+        {
+          "speed_mm_s": 90.0,
+          "correct": 28,
+          "runs": 30,
+          "min_count": 13,
+          "max_count": 14,
+          "time_s": 3.3399999999999728
+        },
+        {
+          "speed_mm_s": 150.0,
+          "correct": 0,
+          "runs": 30,
+          "min_count": 7,
+          "max_count": 9,
+          "time_s": 2.0000000000000013
+        },
+        {
+          "speed_mm_s": 300.0,
+          "correct": 0,
+          "runs": 30,
+          "min_count": 1,
+          "max_count": 3,
+          "time_s": 1.0000000000000007
+        }
+      ],
+      "bluetooth": [
+        {
+          "transport": "EMULATED in-process mailbox; no radio hardware",
+          "sent": "COUNT=14;TIME_MS=5000",
+          "received": "COUNT=14;TIME_MS=5000",
+          "matched": true
+        },
+        {
+          "transport": "EMULATED in-process mailbox; no radio hardware",
+          "sent": "COUNT=14;TIME_MS=7500",
+          "received": "COUNT=14;TIME_MS=7500",
+          "matched": true
+        }
+      ],
+      "bars": [
+        {
+          "x1": 20.0,
+          "x2": 28.0,
+          "height": 35.0,
+          "group": 1
+        },
+        {
+          "x1": 35.0,
+          "x2": 43.0,
+          "height": 35.0,
+          "group": 1
+        },
+        {
+          "x1": 50.0,
+          "x2": 58.0,
+          "height": 35.0,
+          "group": 1
+        },
+        {
+          "x1": 65.0,
+          "x2": 73.0,
+          "height": 35.0,
+          "group": 1
+        },
+        {
+          "x1": 108.0,
+          "x2": 113.0,
+          "height": 55.0,
+          "group": 2
+        },
+        {
+          "x1": 119.0,
+          "x2": 124.0,
+          "height": 55.0,
+          "group": 2
+        },
+        {
+          "x1": 130.0,
+          "x2": 135.0,
+          "height": 55.0,
+          "group": 2
+        },
+        {
+          "x1": 141.0,
+          "x2": 146.0,
+          "height": 55.0,
+          "group": 2
+        },
+        {
+          "x1": 152.0,
+          "x2": 157.0,
+          "height": 55.0,
+          "group": 2
+        },
+        {
+          "x1": 163.0,
+          "x2": 168.0,
+          "height": 55.0,
+          "group": 2
+        },
+        {
+          "x1": 174.0,
+          "x2": 179.0,
+          "height": 55.0,
+          "group": 2
+        },
+        {
+          "x1": 214.0,
+          "x2": 226.0,
+          "height": 25.0,
+          "group": 3
+        },
+        {
+          "x1": 236.0,
+          "x2": 248.0,
+          "height": 25.0,
+          "group": 3
+        },
+        {
+          "x1": 258.0,
+          "x2": 270.0,
+          "height": 25.0,
+          "group": 3
+        }
+      ],
+      "nominal": {
+        "speed_mm_s": 60.0,
+        "seed": 7,
+        "phase_s": 0.003,
+        "total": 14,
+        "expected": 14,
+        "groups": [
+          4,
+          7,
+          3
+        ],
+        "time_s": 4.999999999999938,
+        "y_mm": 0.0
+      },
+      "offset": {
+        "speed_mm_s": 60.0,
+        "seed": 7,
+        "phase_s": 0.003,
+        "total": 7,
+        "expected": 14,
+        "groups": [
+          7
+        ],
+        "time_s": 4.999999999999938,
+        "y_mm": 18.0
+      }
+    },
+    "obstacle": [
+      {
+        "tag": "two_obstacles",
+        "N_cm": 160,
+        "endpoint_x_mm": 1600.0000000000002,
+        "endpoint_y_mm": 2.282896094385372e-14,
+        "path_mm": 2840.000000000001,
+        "time_s": 247.63648575133817,
+        "obstacles_avoided": 2,
+        "min_clearance_mm": 35.00000000000023,
+        "max_line_deviation_mm": 310.0,
+        "obstacles": [
+          [
+            420,
+            -100,
+            650,
+            100
+          ],
+          [
+            1050,
+            -180,
+            1250,
+            80
+          ]
+        ],
+        "noise_mm": 0.0
+      },
+      {
+        "tag": "wide_tall",
+        "N_cm": 120,
+        "endpoint_x_mm": 1200.0000000000005,
+        "endpoint_y_mm": 3.4972025275691895e-14,
+        "path_mm": 1920.0000000000107,
+        "time_s": 151.02835648490554,
+        "obstacles_avoided": 1,
+        "min_clearance_mm": 45.0,
+        "max_line_deviation_mm": 360.0,
+        "obstacles": [
+          [
+            400,
+            -240,
+            710,
+            120
+          ]
+        ],
+        "noise_mm": 2
+      },
+      {
+        "tag": "clear",
+        "N_cm": 80,
+        "endpoint_x_mm": 799.9999999999943,
+        "endpoint_y_mm": 0.0,
+        "path_mm": 799.9999999999943,
+        "time_s": 6.666666666666606,
+        "obstacles_avoided": 0,
+        "min_clearance_mm": null,
+        "max_line_deviation_mm": 0.0,
+        "obstacles": [],
+        "noise_mm": 0.0
+      }
+    ],
+    "line": [
+      {
+        "mode": "P",
+        "kp": 0.85,
+        "ki": 0.0,
+        "kd": 0.0,
+        "completed": true,
+        "time_s": 20.960000000000477,
+        "path_mm": 2265.0217436908647,
+        "rms_error_mm": 1.7121615952459988,
+        "max_error_mm": 3.889684753278857,
+        "mean_error_mm": 1.6050374810117656,
+        "saturated_samples": 0,
+        "lap_angle_rad": 6.292006037951772,
+        "endpoint_x_mm": 358.7208597281745,
+        "endpoint_y_mm": -31.559444218756276
+      },
+      {
+        "mode": "PI",
+        "kp": 0.7,
+        "ki": 0.28,
+        "kd": 0.0,
+        "completed": true,
+        "time_s": 20.880000000000464,
+        "path_mm": 2256.3585978601022,
+        "rms_error_mm": 0.7817185510488891,
+        "max_error_mm": 5.674145124159679,
+        "mean_error_mm": 0.12349339864710343,
+        "saturated_samples": 0,
+        "lap_angle_rad": 6.291973916691202,
+        "endpoint_x_mm": 357.0390632945442,
+        "endpoint_y_mm": -31.42304094387579
+      },
+      {
+        "mode": "PID",
+        "kp": 0.8,
+        "ki": 0.25,
+        "kd": 0.035,
+        "completed": true,
+        "time_s": 20.880000000000464,
+        "path_mm": 2256.3628563802577,
+        "rms_error_mm": 0.6388457796976071,
+        "max_error_mm": 5.270450596044611,
+        "mean_error_mm": 0.17615609869769389,
+        "saturated_samples": 6,
+        "lap_angle_rad": 6.2917877132158475,
+        "endpoint_x_mm": 357.07761126721533,
+        "endpoint_y_mm": -31.493438755175813
+      }
+    ]
+  }
+}

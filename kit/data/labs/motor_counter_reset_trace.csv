@@ -1,0 +1,7 @@
+event,shaft_deg,tacho_count_deg,program_rotation_deg
+Initial,0,0,0
+Relative move +450,450,450,450
+ResetTachoCount only,450,0,450
+Relative move -45 (no automatic reset),405,-45,405
+ResetRotationCount only,405,-45,0
+Relative move +650 (no automatic reset),1055,605,650

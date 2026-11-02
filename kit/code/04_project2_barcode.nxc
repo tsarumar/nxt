@@ -1,0 +1,120 @@
+/* Omar Zid | One downward color sensor counts black vertical bars on white.
+   Bars are crossed perpendicularly. Hysteresis, debouncing, encoder groups,
+   elapsed time, Scanner.txt append and acknowledged Bluetooth sum transfer.
+   Sender is Bluetooth master; pair receiver on connection1 before starting. */
+#include "common_config.nxc"
+#define SCAN_LENGTH_MM 300.0
+#define SCAN_POWER 16
+#define BLACK_THRESHOLD 35
+#define WHITE_THRESHOLD 65
+#define CONFIRM_SAMPLES 3
+#define GROUP_GAP_MM 20.0
+#define BT_CONNECTION 1
+#define BT_SUM_MAILBOX MAILBOX1
+#define BT_ACK_MAILBOX MAILBOX2
+int groupCounts[16];
+int groupNumber=0;
+int currentGroup=0;
+int totalBars=0;
+
+void SaveGroup() {
+  if (currentGroup==0) return;
+  if (groupNumber>=16) { SetFault("TOO MANY GROUPS"); return; }
+  groupCounts[groupNumber]=currentGroup;
+  groupNumber++;
+  WriteLog(StrCat("GROUP,",NumToStr(groupNumber),",bars,",NumToStr(currentGroup)));
+  currentGroup=0;
+}
+bool SendSumAcknowledged(long sumValue) {
+  int attemptValue;
+  char statusCode;
+  long acknowledgedValue;
+  unsigned long waitingMS;
+  /* Clear stale ack first. One sum per program run: retries are idempotent
+     because receiver replaces its displayed value rather than adding it. */
+  while (ReceiveRemoteNumber(BT_ACK_MAILBOX,true,acknowledgedValue)==NO_ERR) Wait(10);
+  for (attemptValue=0; attemptValue<3 && !CheckAbort(); attemptValue++) {
+    statusCode=SendRemoteNumber(BT_CONNECTION,BT_SUM_MAILBOX,sumValue);
+    if (statusCode==NO_ERR) {
+      waitingMS=CurrentTick();
+      while (CurrentTick()-waitingMS<2500 && !CheckAbort()) {
+        statusCode=ReceiveRemoteNumber(BT_ACK_MAILBOX,true,acknowledgedValue);
+        if (statusCode==NO_ERR && acknowledgedValue==sumValue) return true;
+        Wait(30);
+      }
+    }
+    Wait(200);
+  }
+  return false;
+}
+task main() {
+  int reflectance;
+  int blackSamples=0;
+  int whiteSamples=0;
+  bool isBlack=false;
+  bool btSucceeded;
+  float lastWhitePath=0.0;
+  long wheelDifference;
+  int correctionPower;
+  unsigned long startedMS;
+  unsigned long elapsedMS;
+  unsigned long lastDisplayMS=0;
+  unsigned long stalledMS;
+  float previousPath;
+  SetSensorColorRed(COLOR_PORT); Wait(500);
+  ResetOdometry();
+  if (!ArmRobot("P2 WHITE START")) { FinishDisplay(""); return; }
+  if (Sensor(COLOR_PORT)<WHITE_THRESHOLD) { SetFault("START ON WHITE"); FinishDisplay(""); return; }
+  if (!OpenAppendLog("Scanner.txt",16000)) { FinishDisplay(""); return; }
+  WriteLog("RUN,Omar Zid,HARDWARE_ACQUISITION,scan_mm=300,units:bars/mm/ms");
+  startedMS=CurrentTick(); stalledMS=startedMS; previousPath=pathLength;
+  while (!robotFault && pathLength<SCAN_LENGTH_MM) {
+    reflectance=Sensor(COLOR_PORT);
+    if (reflectance<BLACK_THRESHOLD) { blackSamples++; whiteSamples=0; }
+    else if (reflectance>WHITE_THRESHOLD) { whiteSamples++; blackSamples=0; }
+    else { blackSamples=0; whiteSamples=0; }
+    if (!isBlack && blackSamples>=CONFIRM_SAMPLES) {
+      isBlack=true; currentGroup++; totalBars++; blackSamples=0;
+      WriteLog(StrCat("BAR,",NumToStr(totalBars),",path_mm,",NumToStr(pathLength),",elapsed_ms,",NumToStr(CurrentTick()-startedMS)));
+    }
+    if (isBlack && whiteSamples>=CONFIRM_SAMPLES) {
+      isBlack=false; lastWhitePath=pathLength; whiteSamples=0;
+    }
+    if (!isBlack && currentGroup>0 && pathLength-lastWhitePath>=GROUP_GAP_MM) SaveGroup();
+    wheelDifference=MotorRotationCount(LEFT_MOTOR)-MotorRotationCount(RIGHT_MOTOR);
+    correctionPower=wheelDifference/4;
+    if (correctionPower>5) correctionPower=5;
+    if (correctionPower< -5) correctionPower=-5;
+    SetDrive(SCAN_POWER-correctionPower,SCAN_POWER+correctionPower);
+    UpdateOdometry();
+    if (CurrentTick()-lastDisplayMS>=200) {
+      ClearScreen(); TextOut(0,LCD_LINE1,"SCANNER");
+      TextOut(0,LCD_LINE3,"Bars:"); NumOut(42,LCD_LINE3,totalBars);
+      TextOut(0,LCD_LINE4,"Time ms:"); NumOut(48,LCD_LINE4,CurrentTick()-startedMS);
+      TextOut(0,LCD_LINE5,"mm:"); NumOut(30,LCD_LINE5,pathLength);
+      lastDisplayMS=CurrentTick();
+    }
+    if (CurrentTick()-stalledMS>=700) {
+      if (pathLength-previousPath<1.0) SetFault("SCANNER STALL");
+      stalledMS=CurrentTick(); previousPath=pathLength;
+    }
+    if (CurrentTick()-startedMS>30000) SetFault("SCANNER TIMEOUT");
+    CheckAbort(); Wait(10);
+  }
+  StopDrive(); UpdateOdometry(); elapsedMS=CurrentTick()-startedMS;
+  if (isBlack && !robotFault) SetFault("TRUNCATED LAST BAR");
+  if (!robotFault) SaveGroup();
+  WriteLog(StrCat("RESULT,total_bars,",NumToStr(totalBars),",groups,",NumToStr(groupNumber),",elapsed_ms,",NumToStr(elapsedMS),",status,",robotFaultText));
+  /* Close the persistent log before radio transfer so a missing receiver never
+     prevents the already measured count from being stored. */
+  CloseLog();
+  btSucceeded=false;
+  if (!robotFault) btSucceeded=SendSumAcknowledged(totalBars);
+  ClearScreen(); TextOut(0,LCD_LINE1,"SCANNER RESULT");
+  TextOut(0,LCD_LINE3,"Sum:"); NumOut(36,LCD_LINE3,totalBars);
+  TextOut(0,LCD_LINE4,"Groups:"); NumOut(48,LCD_LINE4,groupNumber);
+  TextOut(0,LCD_LINE5,"Time ms:"); NumOut(48,LCD_LINE5,elapsedMS);
+  if (btSucceeded) TextOut(0,LCD_LINE6,"Bluetooth ACK OK");
+  else TextOut(0,LCD_LINE6,"BT no ACK / saved");
+  FinishDisplay("Scanner.txt saved");
+}

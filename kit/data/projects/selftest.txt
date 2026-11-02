@@ -1,0 +1,2 @@
+PASS: wheel integration, ring empty verification, all objects expelled, complete robot contained, scanner 60 noisy runs at recommended speeds, expected high-speed failure, append log and emulated mailbox, rectangle chassis clearance >30 mm, configurable endpoint N, P/PI/PID one lap.
+All evidence is simulated.

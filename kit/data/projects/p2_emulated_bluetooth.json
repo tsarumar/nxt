@@ -1,0 +1,14 @@
+[
+  {
+    "transport": "EMULATED in-process mailbox; no radio hardware",
+    "sent": "COUNT=14;TIME_MS=5000",
+    "received": "COUNT=14;TIME_MS=5000",
+    "matched": true
+  },
+  {
+    "transport": "EMULATED in-process mailbox; no radio hardware",
+    "sent": "COUNT=14;TIME_MS=7500",
+    "received": "COUNT=14;TIME_MS=7500",
+    "matched": true
+  }
+]

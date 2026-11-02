@@ -1,0 +1,145 @@
+/* Omar Zid | Configurable N cm forward with unknown rectangular obstacles.
+   Feedback Bug2 variant: GO_LINE -> FOLLOW_RIGHT -> REJOIN -> GO_LINE.
+   N is longitudinal displacement x, never travelled detour path length.
+   One front sonar is rotated with the whole robot for right/goal probes.
+   Stepwise scans are slower than a second side sensor but need no extra hardware. */
+#include "common_config.nxc"
+#define DEFAULT_N_CM 200
+#define STEP_MM 25.0
+#define FRONT_DETECT_MM 200.0
+#define SIDE_GAP_MM 180.0
+#define REJOIN_TOLERANCE_MM 30.0
+#define MAX_WALL_PATH_MM 6000.0
+#define MAX_NAV_MS 300000
+#define GO_LINE_STATE 0
+#define FOLLOW_RIGHT_STATE 1
+#define REJOIN_STATE 2
+int configuredCM=DEFAULT_N_CM;
+int navState=GO_LINE_STATE;
+float hitX=0.0;
+float hitY=0.0;
+float wallStartPath=0.0;
+float targetX=0.0;
+
+bool ConfigureDistance() {
+  ClearScreen();
+  TextOut(0,LCD_LINE1,"N cm (10..500)");
+  TextOut(0,LCD_LINE3,"LEFT -10 RIGHT+10");
+  TextOut(0,LCD_LINE5,"ENTER confirm");
+  while (ButtonPressed(BTNCENTER,false)) Wait(20);
+  while (!ButtonPressed(BTNCENTER,false) && !CheckAbort()) {
+    NumOut(40,LCD_LINE2,configuredCM);
+    if (ButtonPressed(BTNLEFT,false)) {
+      configuredCM-=10; if (configuredCM<10) configuredCM=10;
+      Wait(200);
+    }
+    if (ButtonPressed(BTNRIGHT,false)) {
+      configuredCM+=10; if (configuredCM>500) configuredCM=500;
+      Wait(200);
+    }
+    Wait(20);
+  }
+  while (ButtonPressed(BTNCENTER,false)) Wait(20);
+  return !robotFault;
+}
+float ProbeRelative(float angle) {
+  float savedHeading=poseHeading;
+  int readingValue;
+  TurnTo(savedHeading+angle); Wait(80);
+  readingValue=SonarMeanCM(3);
+  TurnTo(savedHeading); Wait(30);
+  if (readingValue<0) return -1.0;
+  if (readingValue==255) return 2550.0;
+  return readingValue*10.0;
+}
+float ProbeOriginalForward() {
+  float savedHeading=poseHeading;
+  int readingValue;
+  TurnTo(0); Wait(80); readingValue=SonarMeanCM(3); TurnTo(savedHeading);
+  if (readingValue<0) return -1.0;
+  return readingValue*10.0;
+}
+void LogNavigation(float frontMM, float rightMM) {
+  WriteLog(StrCat("NAV,",NumToStr(navState),",x_mm,",NumToStr(poseX),",y_mm,",NumToStr(poseY),",heading_deg,",NumToStr(poseHeading),",front_mm,",NumToStr(frontMM),",right_mm,",NumToStr(rightMM)));
+  ClearScreen(); TextOut(0,LCD_LINE1,"NAVIGATION");
+  TextOut(0,LCD_LINE2,"State:"); NumOut(42,LCD_LINE2,navState);
+  TextOut(0,LCD_LINE3,"x mm:"); NumOut(42,LCD_LINE3,poseX);
+  TextOut(0,LCD_LINE4,"y mm:"); NumOut(42,LCD_LINE4,poseY);
+  TextOut(0,LCD_LINE5,"Goal:"); NumOut(42,LCD_LINE5,targetX);
+}
+task main() {
+  float frontMM;
+  float rightMM=0.0;
+  float desiredHeading;
+  float hitDistance;
+  float remainingDistance;
+  float legMM;
+  unsigned long startedMS;
+  SetSensorLowspeed(SONAR_PORT); Wait(400);
+  ResetOdometry();
+  if (!ConfigureDistance() || !ArmRobot("P3 CLEAR START")) { FinishDisplay(""); return; }
+  targetX=configuredCM*10.0;
+  if (!OpenAppendLog("Navigate.txt",32000)) { FinishDisplay(""); return; }
+  WriteLog(StrCat("RUN,Omar Zid,HARDWARE_ACQUISITION,N_cm,",NumToStr(configuredCM),",target_x_mm,",NumToStr(targetX)));
+  startedMS=CurrentTick();
+  while (!robotFault && !(poseX>=targetX-10.0 && AbsFloat(poseY)<=REJOIN_TOLERANCE_MM)) {
+    if (CurrentTick()-startedMS>MAX_NAV_MS) { SetFault("NAV TIMEOUT"); break; }
+    if (navState==GO_LINE_STATE || navState==REJOIN_STATE) {
+      /* Lookahead heading reduces y error; +/-25deg keeps x progress positive. */
+      desiredHeading=-poseY*0.15;
+      if (desiredHeading>25.0) desiredHeading=25.0;
+      if (desiredHeading< -25.0) desiredHeading=-25.0;
+      TurnTo(desiredHeading);
+      frontMM=SonarMeanCM(3)*10.0;
+      if (frontMM<FRONT_DETECT_MM) {
+        hitX=poseX; hitY=poseY; wallStartPath=pathLength;
+        navState=FOLLOW_RIGHT_STATE;
+        TurnTo(90.0); /* obstacle stays on right during anticlockwise detour */
+      } else {
+        legMM=STEP_MM;
+        if (targetX-poseX<legMM && AbsFloat(poseY)<=REJOIN_TOLERANCE_MM)
+          legMM=targetX-poseX;
+        if (legMM<1.0) legMM=1.0;
+        MoveMM(legMM,22);
+        if (AbsFloat(poseY)<=REJOIN_TOLERANCE_MM) navState=GO_LINE_STATE;
+      }
+    } else {
+      frontMM=SonarMeanCM(3)*10.0;
+      rightMM=ProbeRelative(-90.0);
+      /* Front corner: turn left; convex corner: search toward missing right wall.
+         Corner advance uses25mm feedback steps with a fresh front scan each time.
+         Side gap180mm + sonar70 gives body clearance175mm in frontal wall probe. */
+      if (frontMM<FRONT_DETECT_MM) TurnDegrees(90.0);
+      else if (rightMM>350.0) {
+        TurnDegrees(-90.0);
+        frontMM=SonarMeanCM(3)*10.0;
+        if (frontMM>FRONT_DETECT_MM) MoveMM(STEP_MM,20);
+        else TurnDegrees(90.0);
+      } else {
+        /* Small steering correction only. Re-probe next25mm, never a fixed box. */
+        desiredHeading=(rightMM-SIDE_GAP_MM)*-0.03;
+        if (desiredHeading>8.0) desiredHeading=8.0;
+        if (desiredHeading< -8.0) desiredHeading=-8.0;
+        TurnDegrees(desiredHeading);
+        frontMM=SonarMeanCM(3)*10.0;
+        if (frontMM>FRONT_DETECT_MM) MoveMM(STEP_MM,20);
+      }
+      hitDistance=RootPositive((targetX-hitX)*(targetX-hitX)+hitY*hitY);
+      remainingDistance=RootPositive((targetX-poseX)*(targetX-poseX)+poseY*poseY);
+      /* Bug2 leaving rule: meet original m-line beyond hit, closer to goal,
+         and verify that the original forward direction is clear. */
+      if (AbsFloat(poseY)<=REJOIN_TOLERANCE_MM && poseX>hitX+110.0 && remainingDistance<hitDistance-50.0) {
+        if (ProbeOriginalForward()>FRONT_DETECT_MM+50.0) {
+          navState=REJOIN_STATE; TurnTo(0.0);
+        }
+      }
+      if (pathLength-wallStartPath>MAX_WALL_PATH_MM) SetFault("NO SAFE REJOIN");
+      if (pathLength-wallStartPath>700.0 && AbsFloat(poseX-hitX)<40.0 && AbsFloat(poseY-hitY)<40.0)
+        SetFault("UNREACHABLE GOAL");
+    }
+    LogNavigation(frontMM,rightMM); CheckAbort();
+  }
+  StopDrive(); UpdateOdometry();
+  WriteLog(StrCat("END,x_mm,",NumToStr(poseX),",y_mm,",NumToStr(poseY),",path_mm,",NumToStr(pathLength),",elapsed_ms,",NumToStr(CurrentTick()-startedMS),",status,",robotFaultText));
+  CloseLog(); FinishDisplay("N cm GOAL REACHED");
+}

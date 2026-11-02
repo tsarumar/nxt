@@ -1,0 +1,111 @@
+/* Omar Zid | 360-degree US scan, saved map, widest safe corridor, red stop. */
+#include "common_config.nxc"
+#define SCAN_BINS 36
+#define SCAN_STEP_DEG 10
+#define REPEAT_SAMPLES 3
+#define RED_CONFIRMATIONS 2
+#define DRIVE_POWER 22
+#define OBSTACLE_STOP_CM 20
+#define DRIVE_LIMIT_MM 2500.0
+int scanMean[SCAN_BINS];
+bool scanEcho[SCAN_BINS];
+
+void DrawScanMap(int selectedBin) {
+  int binValue;
+  int rangeCM;
+  int endpointX;
+  int endpointY;
+  float angleValue;
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "SCAN MAP / cm");
+  CircleOut(50, 28, 23);
+  for (binValue=0; binValue<SCAN_BINS; binValue++) {
+    rangeCM = scanMean[binValue];
+    if (rangeCM > 200) rangeCM = 200;
+    angleValue = binValue * SCAN_STEP_DEG;
+    endpointX = 50 + rangeCM * 0.115 * CosineDegrees(angleValue);
+    endpointY = 28 + rangeCM * 0.115 * SineDegrees(angleValue);
+    if (scanEcho[binValue]) PointOut(endpointX, endpointY);
+  }
+  LineOut(50,28,50+23*CosineDegrees(selectedBin*10),28+23*SineDegrees(selectedBin*10));
+  TextOut(0,LCD_LINE8,"heading:"); NumOut(50,LCD_LINE8,selectedBin*10);
+}
+task main() {
+  int binValue;
+  int sampleValue;
+  int readingValue;
+  int validSamples;
+  int bestBin = 0;
+  int bestScore = -1;
+  int scoreValue;
+  int leftBin;
+  int rightBin;
+  int redCount = 0;
+  int noEchoCount = 0;
+  long sumValue;
+  unsigned long startedMS;
+  unsigned long checkpointMS;
+  float checkpointPath;
+  string rowText;
+  SetSensorLowspeed(SONAR_PORT);
+  SetSensorColorFull(COLOR_PORT);
+  Wait(500);
+  ResetOdometry();
+  if (!ArmRobot("INTRO SCANNER")) { FinishDisplay(""); return; }
+  if (!OpenAppendLog("Intro.txt", 16000)) { FinishDisplay(""); return; }
+  WriteLog("RUN,Omar Zid,HARDWARE_ACQUISITION,heading_deg,sample,us_cm,elapsed_ms");
+  startedMS=CurrentTick();
+  for (binValue=0; binValue<SCAN_BINS && !robotFault; binValue++) {
+    TurnTo(binValue*SCAN_STEP_DEG); Wait(100);
+    sumValue=0; validSamples=0; scanEcho[binValue]=false;
+    for (sampleValue=0; sampleValue<REPEAT_SAMPLES; sampleValue++) {
+      readingValue=SonarCM();
+      if (readingValue <= 0) SetFault("SONAR ZERO/FAULT");
+      if (readingValue>0 && readingValue<255) { sumValue+=readingValue; validSamples++; }
+      rowText=StrCat(NumToStr(binValue*10),",",NumToStr(sampleValue+1),",",NumToStr(readingValue),",",NumToStr(CurrentTick()-startedMS));
+      WriteLog(rowText); Wait(40);
+    }
+    /* Unknown echoes stay in the raw log but cannot win the clearance score. */
+    if (validSamples>=2) { scanMean[binValue]=sumValue/validSamples; scanEcho[binValue]=true; }
+    else scanMean[binValue]=0;
+    ClearScreen(); TextOut(0,LCD_LINE1,"Scanning 360 deg");
+    NumOut(0,LCD_LINE3,binValue*10); NumOut(50,LCD_LINE3,scanMean[binValue]);
+  }
+  /* Score = minimum of three adjacent mean distances: rejects narrow gaps. */
+  for (binValue=0; binValue<SCAN_BINS; binValue++) {
+    leftBin=(binValue+SCAN_BINS-1)%SCAN_BINS;
+    rightBin=(binValue+1)%SCAN_BINS;
+    scoreValue=scanMean[binValue];
+    if (scanMean[leftBin]<scoreValue) scoreValue=scanMean[leftBin];
+    if (scanMean[rightBin]<scoreValue) scoreValue=scanMean[rightBin];
+    if (scoreValue>bestScore) { bestScore=scoreValue; bestBin=binValue; }
+  }
+  if (bestScore <= OBSTACLE_STOP_CM) SetFault("NO SAFE CORRIDOR");
+  WriteLog(StrCat("SELECT,",NumToStr(bestBin*10),",score_cm,",NumToStr(bestScore)));
+  CloseLog();
+  if (robotFault) { FinishDisplay(""); return; }
+  TurnTo(bestBin*10);
+  DrawScanMap(bestBin); Wait(1500);
+  startedMS=CurrentTick(); checkpointMS=startedMS; checkpointPath=pathLength;
+  while (!robotFault && redCount<RED_CONFIRMATIONS) {
+    /* Stop immediately on first red, then verify while stationary. */
+    if (Sensor(COLOR_PORT)==INPUT_REDCOLOR) { StopDrive(); redCount++; }
+    else { redCount=0; SetDrive(DRIVE_POWER,DRIVE_POWER); }
+    UpdateOdometry();
+    readingValue=SonarCM();
+    if (readingValue<=0) SetFault("SONAR ZERO/FAULT");
+    if (readingValue<OBSTACLE_STOP_CM) SetFault("OBSTACLE STOP");
+    /* No echo is bounded unknown range, never an infinite distance. */
+    if (readingValue==255) noEchoCount++; else noEchoCount=0;
+    if (noEchoCount>150) SetFault("SONAR NO ECHO");
+    if (pathLength>DRIVE_LIMIT_MM || CurrentTick()-startedMS>30000) SetFault("RED NOT FOUND");
+    if (CurrentTick()-checkpointMS>=700) {
+      if (pathLength-checkpointPath<1.0 && redCount==0) SetFault("MOTOR STALL");
+      checkpointMS=CurrentTick(); checkpointPath=pathLength;
+    }
+    CheckAbort(); Wait(10);
+  }
+  StopDrive(); UpdateOdometry();
+  DrawScanMap(bestBin);
+  FinishDisplay("STOPPED ON RED");
+}

@@ -1,0 +1,45 @@
+{
+  "checked_on": "2026-10-19",
+  "checks": "Eight views, all report/image targets, guide opening, exact four project outcomes, clear completion, Replay again, pause, restart, speed experiment, desktop and mobile",
+  "results": [
+    {
+      "project": 1,
+      "completion": "Replay complete",
+      "expected": [
+        "9 / 9",
+        "175.96 s"
+      ],
+      "passed": true
+    },
+    {
+      "project": 2,
+      "completion": "Replay complete",
+      "expected": [
+        "14 / 14",
+        "4.99 s"
+      ],
+      "passed": true
+    },
+    {
+      "project": 3,
+      "completion": "Replay complete",
+      "expected": [
+        "1600.0 mm",
+        "0.0 mm"
+      ],
+      "passed": true
+    },
+    {
+      "project": 4,
+      "completion": "Replay complete",
+      "expected": [
+        "20.88 s",
+        "PID"
+      ],
+      "passed": true
+    }
+  ],
+  "browser_errors": [],
+  "all_passed": true,
+  "physical_robot_tested": false
+}

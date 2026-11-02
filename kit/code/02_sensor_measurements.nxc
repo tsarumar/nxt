@@ -1,0 +1,75 @@
+/* Omar Zid | Sonar range/timing, angular field of view, color/full/raw/intensity.
+   User places flat target / labeled surface at each prompt; values are acquired.
+   API-read duration is NOT acoustic flight time. Echo_us is an estimate d*2/c.
+   Optional gyro is discussed in the report only; no unconnected device readings. */
+#include "common_config.nxc"
+long referenceMM[] = {50,100,200,300,500,1000};
+string surfaceLabels[] = {"BLACK","WHITE","RED","GREEN","BLUE"};
+task main() {
+  int referenceIndex;
+  int sampleIndex;
+  int angularIndex;
+  int surfaceIndex;
+  int usValue;
+  int colorValue;
+  int apiCode;
+  long echoMicroseconds;
+  unsigned long beforeMS;
+  unsigned long afterMS;
+  unsigned long experimentMS;
+  unsigned int rawValues[];
+  unsigned int normalValues[];
+  int scaledValues[];
+  string rowText;
+  SetSensorLowspeed(SONAR_PORT); SetSensorColorFull(COLOR_PORT); Wait(500);
+  ResetOdometry();
+  if (!OpenAppendLog("Sensors.txt",32000)) { FinishDisplay(""); return; }
+  WriteLog("RUN,Omar Zid,HARDWARE_ACQUISITION,units:mm,cm,ms,microseconds");
+  WriteLog("SONAR,reference_mm,sample,us_cm,timestamp_ms,api_duration_ms,estimated_echo_us");
+  experimentMS=CurrentTick();
+  for (referenceIndex=0; referenceIndex<6 && !robotFault; referenceIndex++) {
+    ArmRobot(StrCat("TARGET ",NumToStr(referenceMM[referenceIndex])," mm"));
+    for (sampleIndex=0; sampleIndex<10 && !robotFault; sampleIndex++) {
+      beforeMS=CurrentTick(); usValue=SonarCM(); afterMS=CurrentTick();
+      echoMicroseconds=-1;
+      if (usValue>0 && usValue<255) echoMicroseconds=usValue*20000/343;
+      rowText=StrCat("US,",NumToStr(referenceMM[referenceIndex]),",",NumToStr(sampleIndex+1),",",NumToStr(usValue),",",NumToStr(beforeMS-experimentMS),",",NumToStr(afterMS-beforeMS),",",NumToStr(echoMicroseconds));
+      WriteLog(rowText);
+      NumOut(0,LCD_LINE6,usValue); CheckAbort(); Wait(85);
+    }
+  }
+  /* FOV: target centre 500 mm from SONAR face at initial heading; clear background.
+     A target echo is 1..75 cm. The report calculates edge angles and cone width. */
+  ArmRobot("FOV TARGET 500mm");
+  WriteLog("FOV,angle_deg,sample,us_cm,target_detected");
+  for (angularIndex=-9; angularIndex<=9 && !robotFault; angularIndex++) {
+    TurnTo(angularIndex*5); Wait(100);
+    for (sampleIndex=0; sampleIndex<3 && !robotFault; sampleIndex++) {
+      usValue=SonarCM();
+      rowText=StrCat("FOV,",NumToStr(angularIndex*5),",",NumToStr(sampleIndex+1),",",NumToStr(usValue),",",NumToStr(usValue>0 && usValue<=75));
+      WriteLog(rowText); Wait(70);
+    }
+  }
+  TurnTo(0);
+  WriteLog("COLOR,surface,sample,color_id,raw_R,raw_G,raw_B,raw_blank,norm_R,norm_G,norm_B,scaled_R,scaled_G,scaled_B,api_status");
+  SetSensorColorFull(COLOR_PORT); Wait(400);
+  for (surfaceIndex=0; surfaceIndex<5 && !robotFault; surfaceIndex++) {
+    ArmRobot(StrCat("FULL: ",surfaceLabels[surfaceIndex]));
+    for (sampleIndex=0; sampleIndex<10 && !robotFault; sampleIndex++) {
+      apiCode=ReadSensorColorEx(COLOR_PORT,colorValue,rawValues,normalValues,scaledValues);
+      if (apiCode!=NO_ERR) { SetFault("COLOR READ FAILED"); break; }
+      rowText=StrCat("COLOR,",surfaceLabels[surfaceIndex],",",NumToStr(sampleIndex+1),",",NumToStr(colorValue),",",NumToStr(rawValues[INPUT_RED]),",",NumToStr(rawValues[INPUT_GREEN]),",",NumToStr(rawValues[INPUT_BLUE]),",",NumToStr(rawValues[INPUT_BLANK]),",",NumToStr(normalValues[INPUT_RED]),",",NumToStr(normalValues[INPUT_GREEN]),",",NumToStr(normalValues[INPUT_BLUE]),",",NumToStr(scaledValues[INPUT_RED]),",",NumToStr(scaledValues[INPUT_GREEN]),",",NumToStr(scaledValues[INPUT_BLUE]),",",NumToStr(apiCode));
+      WriteLog(rowText); NumOut(0,LCD_LINE6,colorValue); CheckAbort(); Wait(100);
+    }
+  }
+  WriteLog("INTENSITY,surface,sample,reflected_percent,raw_ADC");
+  SetSensorColorRed(COLOR_PORT); Wait(400);
+  for (surfaceIndex=0; surfaceIndex<5 && !robotFault; surfaceIndex++) {
+    ArmRobot(StrCat("REDLED: ",surfaceLabels[surfaceIndex]));
+    for (sampleIndex=0; sampleIndex<10 && !robotFault; sampleIndex++) {
+      rowText=StrCat("INTENSITY,",surfaceLabels[surfaceIndex],",",NumToStr(sampleIndex+1),",",NumToStr(Sensor(COLOR_PORT)),",",NumToStr(SensorRaw(COLOR_PORT)));
+      WriteLog(rowText); NumOut(0,LCD_LINE6,Sensor(COLOR_PORT)); CheckAbort(); Wait(100);
+    }
+  }
+  CloseLog(); FinishDisplay("MEASUREMENTS SAVED");
+}

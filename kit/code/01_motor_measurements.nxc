@@ -1,0 +1,41 @@
+/* Omar Zid | Motor B shaft experiment. Lift chassis; C remains stopped.
+   Each signed command is a separate trial with reset counters and feedback.
+   MotorTachoCount is displayed alongside the program-relative rotation count. */
+#include "common_config.nxc"
+long shaftCommands[] = {45,450,650,-45,-450,-650};
+task main() {
+  int trialValue;
+  long measuredTacho;
+  long measuredRotation;
+  long measuredError;
+  unsigned long startedMS;
+  string rowText;
+  if (!ArmRobot("LIFT / MOTOR B")) { FinishDisplay(""); return; }
+  if (!OpenAppendLog("Motor.txt",8000)) { FinishDisplay(""); return; }
+  WriteLog("RUN,Omar Zid,HARDWARE_ACQUISITION,command_deg,tacho_deg,rotation_deg,error_deg,time_ms");
+  for (trialValue=0; trialValue<6 && !robotFault; trialValue++) {
+    StopDrive();
+    ResetTachoCount(LEFT_MOTOR); ResetRotationCount(LEFT_MOTOR);
+    Wait(50);
+    previousLeft=MotorRotationCount(LEFT_MOTOR);
+    previousRight=MotorRotationCount(RIGHT_MOTOR);
+    startedMS=CurrentTick();
+    MoveWheelDegrees(shaftCommands[trialValue],0,30,10000);
+    measuredTacho=MotorTachoCount(LEFT_MOTOR);
+    measuredRotation=MotorRotationCount(LEFT_MOTOR);
+    measuredError=measuredTacho-shaftCommands[trialValue];
+    rowText=StrCat(NumToStr(shaftCommands[trialValue]),",",NumToStr(measuredTacho),",",NumToStr(measuredRotation),",",NumToStr(measuredError),",",NumToStr(CurrentTick()-startedMS));
+    WriteLog(rowText);
+    ClearScreen(); TextOut(0,LCD_LINE1,"MOTOR B / deg");
+    TextOut(0,LCD_LINE2,"Command:"); NumOut(55,LCD_LINE2,shaftCommands[trialValue]);
+    TextOut(0,LCD_LINE3,"Tacho:"); NumOut(55,LCD_LINE3,measuredTacho);
+    TextOut(0,LCD_LINE4,"Rotation:"); NumOut(55,LCD_LINE4,measuredRotation);
+    TextOut(0,LCD_LINE5,"Error:"); NumOut(55,LCD_LINE5,measuredError);
+    Wait(2000);
+    ResetTachoCount(LEFT_MOTOR); ResetRotationCount(LEFT_MOTOR); Wait(50);
+    TextOut(0,LCD_LINE6,"Reset:"); NumOut(55,LCD_LINE6,MotorTachoCount(LEFT_MOTOR));
+    WriteLog(StrCat("RESET,",NumToStr(MotorTachoCount(LEFT_MOTOR)),",",NumToStr(MotorRotationCount(LEFT_MOTOR))));
+    Wait(1000);
+  }
+  CloseLog(); FinishDisplay("TRIALS COMPLETE");
+}

@@ -1,0 +1,158 @@
+/* Omar Zid | One-color-sensor PID edge follower, calibrated black and white.
+   Clockwise/counterclockwise edge orientation is set by EDGE_SIGN below.
+   Unique broad dark start/finish stripe; arm lap after1500mm of encoder path.
+   Marker low reflectance<25 for100ms. Track/marker assumptions are in README.
+   Floating PID works with standard NXT2.0; no enhanced math opcode used. */
+#include "common_config.nxc"
+#define KP_LINE 0.80
+#define KI_LINE 0.25
+#define KD_LINE 0.035
+#define EDGE_SIGN 1.0
+#define BASE_SPEED_MM_S 110.0
+#define POWER_PER_MM_S 0.18
+#define MAX_OMEGA_RAD_S 1.1667
+#define MIN_LAP_PATH_MM 1500.0
+#define MARKER_LEVEL 25.0
+#define MARKER_HOLD_MS 100
+#define LOST_LINE_MS 1200
+#define MAX_LAP_MS 90000
+float blackReading=0.0;
+float whiteReading=100.0;
+
+float CalibrateSurface(string surfaceName) {
+  int sampleValue;
+  float sumValue=0.0;
+  ArmRobot(StrCat("PLACE ON ",surfaceName));
+  for (sampleValue=0; sampleValue<20; sampleValue++) {
+    sumValue+=Sensor(COLOR_PORT); CheckAbort(); Wait(20);
+  }
+  return sumValue/20.0;
+}
+task main() {
+  float reflected;
+  float errorValue=0.0;
+  float previousError=0.0;
+  float integralValue=0.0;
+  float candidateIntegral;
+  float derivativeValue=0.0;
+  float omegaValue;
+  float unsaturatedOmega;
+  float lastValidOmega=0.31;
+  float dtSeconds;
+  float leftVelocity;
+  float rightVelocity;
+  float measuredLeft;
+  float measuredRight;
+  float leftIntegral=0.0;
+  float rightIntegral=0.0;
+  int leftCommand;
+  int rightCommand;
+  long leftTick;
+  long rightTick;
+  long lastLeftTick;
+  long lastRightTick;
+  unsigned long startedMS;
+  unsigned long lastMS;
+  unsigned long nowMS;
+  unsigned long markerStartedMS=0;
+  unsigned long lostStartedMS=0;
+  unsigned long lastLogMS=0;
+  unsigned long stalledMS;
+  float previousPath;
+  bool leftStartMarker=false;
+  bool lapCompleted=false;
+  bool lapArmed=false;
+  SetSensorColorRed(COLOR_PORT); Wait(500); ResetOdometry();
+  blackReading=CalibrateSurface("BLACK");
+  whiteReading=CalibrateSurface("WHITE");
+  if (whiteReading-blackReading<20.0) SetFault("LOW COLOR CONTRAST");
+  if (!robotFault) ArmRobot("P4 START STRIPE");
+  if (robotFault) { FinishDisplay(""); return; }
+  if (!OpenAppendLog("Line.txt",32000)) { FinishDisplay(""); return; }
+  WriteLog(StrCat("RUN,Omar Zid,HARDWARE_ACQUISITION,black,",NumToStr(blackReading),",white,",NumToStr(whiteReading),",Kp,0.80,Ki,0.25,Kd,0.035"));
+  WriteLog("PID,elapsed_ms,path_mm,reflect_percent,error,omega_rad_s,left_power,right_power");
+  startedMS=CurrentTick(); lastMS=startedMS; stalledMS=startedMS; previousPath=pathLength;
+  lastLeftTick=MotorRotationCount(LEFT_MOTOR); lastRightTick=MotorRotationCount(RIGHT_MOTOR);
+  /* Leave the transverse start stripe straight before enabling edge PID. */
+  while (!leftStartMarker && !robotFault) {
+    reflected=20.0+60.0*(Sensor(COLOR_PORT)-blackReading)/(whiteReading-blackReading);
+    SetDrive(18,18); UpdateOdometry();
+    if (reflected>MARKER_LEVEL+10.0) leftStartMarker=true;
+    if (pathLength>100.0 || CurrentTick()-startedMS>5000) SetFault("START STRIPE/ALIGN");
+    CheckAbort(); Wait(10);
+  }
+  lastMS=CurrentTick();
+  lastLeftTick=MotorRotationCount(LEFT_MOTOR); lastRightTick=MotorRotationCount(RIGHT_MOTOR);
+  while (!robotFault && !lapCompleted) {
+    nowMS=CurrentTick();
+    dtSeconds=(nowMS-lastMS)/1000.0;
+    if (dtSeconds<0.008) { Wait(2); continue; }
+    if (dtSeconds>0.1) dtSeconds=0.1;
+    lastMS=nowMS;
+    /* Match the report model's calibrated black20 / white80 scale. */
+    reflected=20.0+60.0*(Sensor(COLOR_PORT)-blackReading)/(whiteReading-blackReading);
+    if (reflected<0.0) reflected=0.0;
+    if (reflected>100.0) reflected=100.0;
+    errorValue=(reflected-50.0)/30.0;
+    candidateIntegral=integralValue+errorValue*dtSeconds;
+    if (candidateIntegral>2.0) candidateIntegral=2.0;
+    if (candidateIntegral< -2.0) candidateIntegral=-2.0;
+    derivativeValue=0.8*derivativeValue+0.2*(errorValue-previousError)/dtSeconds;
+    unsaturatedOmega=EDGE_SIGN*(KP_LINE*errorValue+KI_LINE*candidateIntegral+KD_LINE*derivativeValue);
+    omegaValue=unsaturatedOmega;
+    if (omegaValue>MAX_OMEGA_RAD_S) omegaValue=MAX_OMEGA_RAD_S;
+    if (omegaValue< -MAX_OMEGA_RAD_S) omegaValue=-MAX_OMEGA_RAD_S;
+    /* Conditional integration prevents wind-up when the steering saturates. */
+    if (!(pathLength>MIN_LAP_PATH_MM && reflected<MARKER_LEVEL) &&
+        (AbsFloat(unsaturatedOmega)<MAX_OMEGA_RAD_S || unsaturatedOmega*EDGE_SIGN*errorValue<0.0))
+      integralValue=candidateIntegral;
+    if (pathLength>MIN_LAP_PATH_MM && reflected<MARKER_LEVEL) omegaValue=lastValidOmega;
+    else lastValidOmega=omegaValue;
+    previousError=errorValue;
+    leftVelocity=BASE_SPEED_MM_S-omegaValue*TRACK_MM/2.0;
+    rightVelocity=BASE_SPEED_MM_S+omegaValue*TRACK_MM/2.0;
+    leftTick=MotorRotationCount(LEFT_MOTOR); rightTick=MotorRotationCount(RIGHT_MOTOR);
+    measuredLeft=(leftTick-lastLeftTick)*MM_PER_DEG/dtSeconds;
+    measuredRight=(rightTick-lastRightTick)*MM_PER_DEG/dtSeconds;
+    lastLeftTick=leftTick; lastRightTick=rightTick;
+    /* Encoder velocity PI provides actual wheel-speed feedback. Calibrate
+       POWER_PER_MM_S for the specific motors/battery before track testing. */
+    leftIntegral+=(leftVelocity-measuredLeft)*dtSeconds*0.02;
+    rightIntegral+=(rightVelocity-measuredRight)*dtSeconds*0.02;
+    if (leftIntegral>8.0) leftIntegral=8.0;
+    if (leftIntegral< -8.0) leftIntegral=-8.0;
+    if (rightIntegral>8.0) rightIntegral=8.0;
+    if (rightIntegral< -8.0) rightIntegral=-8.0;
+    leftCommand=leftVelocity*POWER_PER_MM_S+0.03*(leftVelocity-measuredLeft)+leftIntegral;
+    rightCommand=rightVelocity*POWER_PER_MM_S+0.03*(rightVelocity-measuredRight)+rightIntegral;
+    SetDrive(leftCommand,rightCommand); UpdateOdometry();
+    lapArmed=pathLength>MIN_LAP_PATH_MM;
+    if (lapArmed && reflected<MARKER_LEVEL) {
+      if (markerStartedMS==0) markerStartedMS=nowMS;
+      if (nowMS-markerStartedMS>=MARKER_HOLD_MS) lapCompleted=true;
+    } else markerStartedMS=0;
+    /* White continuously with large error indicates no acquired line. */
+    if (reflected>78.0) {
+      if (lostStartedMS==0) lostStartedMS=nowMS;
+      if (nowMS-lostStartedMS>LOST_LINE_MS) SetFault("LINE LOST / STOP");
+    } else lostStartedMS=0;
+    if (nowMS-stalledMS>=700) {
+      if (pathLength-previousPath<1.0) SetFault("LINE MOTOR STALL");
+      stalledMS=nowMS; previousPath=pathLength;
+    }
+    if (nowMS-startedMS>MAX_LAP_MS) SetFault("LAP TIMEOUT");
+    if (nowMS-lastLogMS>=100) {
+      WriteLog(StrCat("PID,",NumToStr(nowMS-startedMS),",",NumToStr(pathLength),",",NumToStr(reflected),",",NumToStr(errorValue),",",NumToStr(omegaValue),",",NumToStr(leftCommand),",",NumToStr(rightCommand)));
+      TextOut(0,LCD_LINE1,"PID ONE LAP"); NumOut(0,LCD_LINE3,reflected);
+      NumOut(48,LCD_LINE3,pathLength); lastLogMS=nowMS;
+    }
+    CheckAbort(); Wait(2);
+  }
+  StopDrive(); UpdateOdometry();
+  WriteLog(StrCat("END,lap,",NumToStr(lapCompleted),",elapsed_ms,",NumToStr(CurrentTick()-startedMS),",path_mm,",NumToStr(pathLength),",status,",robotFaultText));
+  CloseLog();
+  ClearScreen(); TextOut(0,LCD_LINE1,"PID LINE RESULT");
+  TextOut(0,LCD_LINE3,"Time ms:"); NumOut(48,LCD_LINE3,CurrentTick()-startedMS);
+  TextOut(0,LCD_LINE4,"Path mm:"); NumOut(48,LCD_LINE4,pathLength);
+  FinishDisplay("ONE LAP COMPLETE");
+}

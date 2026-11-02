@@ -1,0 +1,320 @@
+{
+  "reports": [
+    {
+      "id": "08_Kinematics",
+      "title": "Kinematics exercise solutions",
+      "source": "02 Basis of kinematics.pdf pages 23 and 27; 03 Direct Kinematics cont.pdf page 4",
+      "summary": "The four coordinate transformation tasks and all visible frame exercises are solved below. Worked substitutions retain angle and length units. B and D relationships are given symbolically because those frames are absent from the supplied drawing.",
+      "sections": [
+        {
+          "heading": "Basis of kinematics task 1",
+          "paragraphs": [
+            "Given a 30 degree rotation about positive Z_A, a point on positive Y_B has p_B = [0, 7, 0]^T u. The positive direction is confirmed by the counterclockwise drawing.",
+            "The transformation taking B coordinates into A coordinates is"
+          ],
+          "matrix": "[  0.866025  -0.5  0  0 ]\n[  0.5   0.866025  0  0 ]\n[ 0  0   1  0 ]\n[ 0  0  0   1 ]",
+          "calculations": [
+            "x_A = 0 cos(30 deg) - 7 sin(30 deg) = -3.500000 u",
+            "y_A = 0 sin(30 deg) + 7 cos(30 deg) = 6.062178 u",
+            "z_A = 0 u"
+          ],
+          "table": {
+            "headers": [
+              "Quantity",
+              "Final result"
+            ],
+            "rows": [
+              [
+                "Point in frame A",
+                "[-3.500000, 6.062178, 0.000000]^T u"
+              ],
+              [
+                "Inverse substitution residual",
+                "Less than 1e-12 u"
+              ],
+              [
+                "Rotation determinant",
+                "1.000000"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "Basis of kinematics task 2",
+          "paragraphs": [
+            "Given a positive 90 degree rotation about Y_A and p_B = [-3, 5, -8]^T u, the origins coincide.",
+            "The transformation taking B coordinates into A coordinates is"
+          ],
+          "matrix": "[ 0  0   1  0 ]\n[ 0   1  0  0 ]\n[ -1  0  0  0 ]\n[ 0  0  0   1 ]",
+          "calculations": [
+            "x_A = 0(-3) + 1(-8) = -8 u",
+            "y_A = 5 u",
+            "z_A = -1(-3) + 0(-8) = 3 u"
+          ],
+          "table": {
+            "headers": [
+              "Quantity",
+              "Final result"
+            ],
+            "rows": [
+              [
+                "Point in frame A",
+                "[-8.000000, 5.000000, 3.000000]^T u"
+              ],
+              [
+                "Inverse substitution residual",
+                "Less than 1e-12 u"
+              ],
+              [
+                "Rotation determinant",
+                "1.000000"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "Basis of kinematics task 3",
+          "paragraphs": [
+            "Given a positive 30 degree rotation about Z_A and p_B = [-1, -39, 5]^T u, the origin translation is [-2, -8, 0]^T u, expressed in A. The translation is added after rotating the point.",
+            "The transformation taking B coordinates into A coordinates is"
+          ],
+          "matrix": "[  0.866025  -0.5  0  -2 ]\n[  0.5   0.866025  0  -8 ]\n[ 0  0   1  0 ]\n[ 0  0  0   1 ]",
+          "calculations": [
+            "x_A = -1 cos(30 deg) - (-39) sin(30 deg) - 2 = 16.633975 u",
+            "y_A = -1 sin(30 deg) + (-39) cos(30 deg) - 8 = -42.274991 u",
+            "z_A = 5 + 0 = 5 u"
+          ],
+          "table": {
+            "headers": [
+              "Quantity",
+              "Final result"
+            ],
+            "rows": [
+              [
+                "Point in frame A",
+                "[16.633975, -42.274991, 5.000000]^T u"
+              ],
+              [
+                "Inverse substitution residual",
+                "Less than 1e-12 u"
+              ],
+              [
+                "Rotation determinant",
+                "1.000000"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "Basis of kinematics task 4",
+          "paragraphs": [
+            "Given a positive 45 degree rotation about X_A and p_B = [4, -2, 17]^T u, the origin translation is [0, 5, -8]^T u, expressed in A.",
+            "The transformation taking B coordinates into A coordinates is"
+          ],
+          "matrix": "[  1  0  0  0 ]\n[ 0   0.707107  -0.707107   5 ]\n[ 0   0.707107   0.707107  -8 ]\n[ 0  0  0   1 ]",
+          "calculations": [
+            "x_A = 4 u",
+            "y_A = -2 cos(45 deg) - 17 sin(45 deg) + 5 = -8.435029 u",
+            "z_A = -2 sin(45 deg) + 17 cos(45 deg) - 8 = 2.606602 u"
+          ],
+          "table": {
+            "headers": [
+              "Quantity",
+              "Final result"
+            ],
+            "rows": [
+              [
+                "Point in frame A",
+                "[4.000000, -8.435029, 2.606602]^T u"
+              ],
+              [
+                "Inverse substitution residual",
+                "Less than 1e-12 u"
+              ],
+              [
+                "Rotation determinant",
+                "1.000000"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "Direct kinematics missing axes",
+          "paragraphs": [
+            "Use a right handed frame: X cross Y = Z, Y cross Z = X, and Z cross X = Y. Set the drawing basis to X_A toward the right, Y_A toward the back, and Z_A upward. The dimensions are interpreted as front width 4 u, tall width 7 u, front depth 3 u, rear depth 2 u, front height 5 u, and tall height 6 u.",
+            "The origin of F is read at the front left upper corner of the tall section, C at the front left corner at height 5 u, I at the front right upper corner, and E at the front right lower corner of the tall section."
+          ],
+          "table": {
+            "headers": [
+              "Frame",
+              "Missing axis in A coordinates",
+              "Right hand check"
+            ],
+            "rows": [
+              [
+                "A",
+                "Y_A = (0,1,0)",
+                "X_A cross Y_A = Z_A"
+              ],
+              [
+                "C",
+                "Z_C = Y_A",
+                "Z_A cross X_A = Y_A"
+              ],
+              [
+                "F",
+                "X_F = Z_A",
+                "Y_F cross Z_F = X_A cross Y_A"
+              ],
+              [
+                "I",
+                "X_I = Y_A",
+                "(-X_A) cross Z_A = Y_A"
+              ],
+              [
+                "E",
+                "Y_E = X_A",
+                "Z_A cross (-Y_A) = X_A"
+              ]
+            ]
+          },
+          "figure": "data/kinematics/coordinate_frames.png",
+          "caption": "Reconstruction of the visible slide geometry. Newly supplied axes appear in green."
+        },
+        {
+          "heading": "Direct kinematics frame data",
+          "paragraphs": [
+            "A_from_B denotes the matrix that maps coordinates expressed in B to coordinates expressed in A. Its three rotation columns are the B unit axes expressed in A; the last column is the B origin expressed in A."
+          ],
+          "table": {
+            "headers": [
+              "Frame",
+              "Origin in A in u",
+              "X axis in A",
+              "Y axis in A",
+              "Z axis in A"
+            ],
+            "rows": [
+              [
+                "A",
+                "[0, 0, 0]",
+                "[1, 0, 0]",
+                "[0, 1, 0]",
+                "[0, 0, 1]"
+              ],
+              [
+                "C",
+                "[0, 3, 5]",
+                "[0, 0, 1]",
+                "[1, 0, 0]",
+                "[0, 1, 0]"
+              ],
+              [
+                "F",
+                "[0, 3, 6]",
+                "[0, 0, 1]",
+                "[1, 0, 0]",
+                "[0, 1, 0]"
+              ],
+              [
+                "I",
+                "[4, 0, 5]",
+                "[0, 1, 0]",
+                "[-1, 0, 0]",
+                "[0, 0, 1]"
+              ],
+              [
+                "E",
+                "[7, 3, 0]",
+                "[0, -1, 0]",
+                "[1, 0, 0]",
+                "[0, 0, 1]"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "A from E",
+          "paragraphs": [
+            "Calculated from the visible coordinate frames using target_from_source = inverse(A_from_target) times A_from_source."
+          ],
+          "matrix": "[ 0   1  0   7 ]\n[ -1  0  0   3 ]\n[ 0  0   1  0 ]\n[ 0  0  0   1 ]",
+          "calculations": [
+            "Check: target_from_source times source_from_target = identity to numerical tolerance 1e-12."
+          ]
+        },
+        {
+          "heading": "C from I",
+          "paragraphs": [
+            "Calculated from the visible coordinate frames using target_from_source = inverse(A_from_target) times A_from_source."
+          ],
+          "matrix": "[ 0  0   1  0 ]\n[ 0  -1  0   4 ]\n[  1  0  0  -3 ]\n[ 0  0  0   1 ]",
+          "calculations": [
+            "Check: target_from_source times source_from_target = identity to numerical tolerance 1e-12."
+          ]
+        },
+        {
+          "heading": "F from A",
+          "paragraphs": [
+            "Calculated from the visible coordinate frames using target_from_source = inverse(A_from_target) times A_from_source."
+          ],
+          "matrix": "[ 0  0   1  -6 ]\n[  1  0  0  0 ]\n[ 0   1  0  -3 ]\n[ 0  0  0   1 ]",
+          "calculations": [
+            "Check: target_from_source times source_from_target = identity to numerical tolerance 1e-12."
+          ]
+        },
+        {
+          "heading": "Transforms involving frames B and D",
+          "paragraphs": [
+            "The slide requests A_from_B, B_from_A and D_from_B, but its figure does not define the locations or orientations of frames B and D. A_from_E is requested twice and has the same answer both times. Numerical B or D matrices are not uniquely determined by the supplied figure. The following symbolic answers completely express the relationships without assigning invented frame positions.",
+            "Let B have orientation R_B and origin b expressed in A; let D have orientation R_D and origin d expressed in A. Then the requested matrices are"
+          ],
+          "calculations": [
+            "A_from_B = block matrix [R_B, b; 0 0 0, 1]",
+            "B_from_A = block matrix [R_B transpose, -R_B transpose times b; 0 0 0, 1]",
+            "D_from_B = block matrix [R_D transpose times R_B, R_D transpose times (b - d); 0 0 0, 1]",
+            "Enter the missing axes and origins into kinematics.py to obtain numeric values when the complete figure is available."
+          ]
+        },
+        {
+          "heading": "Rotation conventions and verification",
+          "paragraphs": [
+            "The degree symbols in the tasks are inconsistently typed as a backtick or prime. They are interpreted as degrees, consistent with the illustrated 30 degree frame rotation and the 90 degree task. Treating them as arcminutes would produce different answers.",
+            "No centimetre or millimetre unit is supplied for the lecture coordinates, so u denotes the unspecified length unit used in the slides. This preserves dimensional consistency without inventing a scale.",
+            "For fixed axis rotations used here, R_z(beta) rotates the frame axes positively by the right hand rule. A_from_B times p_B returns p_A. The translation is expressed in A. For the lecture X Y Z example, multiplication order R_x(gamma) R_y(beta) R_z(alpha) matters; reverse multiplication describes a different convention.",
+            "Numerical checks confirm rotation orthogonality, determinant +1, homogeneous inverse consistency, and the four point transformation round trips. The printed lecture extraction appears to repeat beta where a third angle is expected in the angle recovery formulas; derive angles from the chosen matrix convention instead of copying that label."
+          ],
+          "table": {
+            "headers": [
+              "Verification",
+              "Result"
+            ],
+            "rows": [
+              [
+                "Four point round trips",
+                "PASS below 1e-12 u"
+              ],
+              [
+                "Visible frame rotations",
+                "PASS orthogonal determinant +1"
+              ],
+              [
+                "Three calculated frame transforms",
+                "PASS inverse products"
+              ],
+              [
+                "Missing B and D definitions",
+                "Symbolic solution supplied"
+              ]
+            ]
+          }
+        }
+      ],
+      "references": [
+        "02 Basis of kinematics.pdf, supplied lecture, pages 21 to 27.",
+        "03 Direct Kinematics cont.pdf, supplied lecture, pages 1 to 6.",
+        "01 Introduction to robotics.pdf, supplied lecture, contextual reading."
+      ]
+    }
+  ]
+}

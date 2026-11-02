@@ -1,0 +1,140 @@
+/* Omar Zid | Ring cleaner: acquire, push, retreat, rescan, verify, map.
+   Demonstration geometry: outer edge R=600mm; black inner edge R=580mm;
+   body radius75mm; pusher and downward S1 at150mm ahead; object radius20mm.
+   Start at ring centre. Ejected positions are geometric estimates, not tracking.
+   Low power and 150mm sensor lead protect the chassis; see README tolerances. */
+#include "common_config.nxc"
+#define RING_RADIUS_MM 600.0
+#define BLACK_INNER_RADIUS_MM 580.0
+#define BODY_RADIUS_MM 75.0
+#define FRONT_MM 150.0
+#define OBJECT_RADIUS_MM 20.0
+#define MAX_EJECTED 16
+#define RING_SCAN_BINS 360
+#define MAX_RUN_MS 1200000
+float ejectX[MAX_EJECTED];
+float ejectY[MAX_EJECTED];
+int ejectCount = 0;
+
+void RingMap() {
+  int indexValue;
+  int screenX;
+  int screenY;
+  ClearScreen(); TextOut(0,LCD_LINE1,"EJECTED MAP est.");
+  CircleOut(50,29,24);
+  for (indexValue=0; indexValue<ejectCount; indexValue++) {
+    screenX=50+ejectX[indexValue]*24/RING_RADIUS_MM;
+    screenY=29+ejectY[indexValue]*24/RING_RADIUS_MM;
+    CircleOut(screenX,screenY,1);
+  }
+  PointOut(50,29);
+  TextOut(0,LCD_LINE8,"Pushed:"); NumOut(48,LCD_LINE8,ejectCount);
+}
+/* Nearest finite return ending inside ring. A missing echo is not an object.
+   1-degree headings improve coverage of small targets. This remains conditional
+   on target reflectivity, beam coverage and occlusion, discussed in README. */
+int FindObjectHeading() {
+  int binValue;
+  int sampleValue;
+  int readingValue;
+  int validSamples;
+  int nearestHeading = -1;
+  float rangeMM;
+  float nearestMM = RING_RADIUS_MM + 1.0;
+  long sumCM;
+  for (binValue=0; binValue<RING_SCAN_BINS && !robotFault; binValue++) {
+    TurnTo(binValue); Wait(30);
+    sumCM=0; validSamples=0;
+    for (sampleValue=0; sampleValue<3; sampleValue++) {
+      readingValue=SonarCM();
+      if (readingValue==0) SetFault("SONAR ZERO/FAULT");
+      if (readingValue>0 && readingValue<255) { sumCM+=readingValue; validSamples++; }
+      CheckAbort(); Wait(20);
+    }
+    if (validSamples>=2) {
+      rangeMM=sumCM*10.0/validSamples + SONAR_OFFSET_MM;
+      if (rangeMM<nearestMM && rangeMM<RING_RADIUS_MM-OBJECT_RADIUS_MM) {
+        nearestMM=rangeMM; nearestHeading=binValue;
+      }
+    }
+    if (binValue%30==0) {
+      ClearScreen(); TextOut(0,LCD_LINE1,"RING SCAN 1 deg");
+      NumOut(0,LCD_LINE3,binValue); NumOut(55,LCD_LINE3,ejectCount);
+    }
+  }
+  WriteLog(StrCat("SCAN,nearest_heading_deg,",NumToStr(nearestHeading),",nearest_mm,",NumToStr(nearestMM)));
+  return nearestHeading;
+}
+bool PushAndReturn(int targetHeading) {
+  float startingPath;
+  float pushedDistance;
+  float predictedFrontRadius;
+  float estimatedX;
+  float estimatedY;
+  unsigned long pushStartedMS;
+  unsigned long stalledMS;
+  float lastPath;
+  bool reachedBlack = false;
+  TurnTo(targetHeading); Wait(50);
+  startingPath=pathLength; pushStartedMS=CurrentTick();
+  stalledMS=pushStartedMS; lastPath=pathLength;
+  /* Approach and push in same radial direction. Boundary is read continuously. */
+  while (!robotFault && !reachedBlack) {
+    UpdateOdometry();
+    predictedFrontRadius=RootPositive(poseX*poseX+poseY*poseY)+FRONT_MM;
+    if (Sensor(COLOR_PORT)==INPUT_BLACKCOLOR) { StopDrive(); reachedBlack=true; }
+    else SetDrive(16,16);
+    if (predictedFrontRadius>BLACK_INNER_RADIUS_MM+15.0 && !reachedBlack)
+      SetFault("BOUNDARY NOT SEEN");
+    if (RootPositive(poseX*poseX+poseY*poseY)+BODY_RADIUS_MM>RING_RADIUS_MM-25.0)
+      SetFault("CHASSIS EDGE GUARD");
+    if (CurrentTick()-pushStartedMS>30000) SetFault("PUSH TIMEOUT");
+    if (CurrentTick()-stalledMS>700) {
+      if (pathLength-lastPath<1.0) SetFault("PUSH STALL");
+      stalledMS=CurrentTick(); lastPath=pathLength;
+    }
+    CheckAbort(); Wait(10);
+  }
+  StopDrive(); Wait(50); UpdateOdometry();
+  /* Confirm black while stopped, then bridge known 20mm ring width by encoder.
+     Pusher reaches outer edge; body remains75mm inside. No extra margin exists
+     for complete ejection, so hardware needs measured geometry and tolerances. */
+  if (!robotFault && Sensor(COLOR_PORT)!=INPUT_BLACKCOLOR) SetFault("BOUNDARY UNCONFIRMED");
+  if (!robotFault) MoveMM(RING_RADIUS_MM-BLACK_INNER_RADIUS_MM,12);
+  if (!robotFault) {
+    estimatedX=poseX+(FRONT_MM+OBJECT_RADIUS_MM)*CosineDegrees(poseHeading);
+    estimatedY=poseY+(FRONT_MM+OBJECT_RADIUS_MM)*SineDegrees(poseHeading);
+    ejectX[ejectCount]=estimatedX; ejectY[ejectCount]=estimatedY; ejectCount++;
+    WriteLog(StrCat("EJECT_EST,",NumToStr(ejectCount),",x_mm,",NumToStr(estimatedX),",y_mm,",NumToStr(estimatedY),",heading_deg,",NumToStr(poseHeading)));
+    RingMap(); Wait(800);
+  }
+  pushedDistance=pathLength-startingPath;
+  if (!robotFault) MoveMM(-pushedDistance,18);
+  /* Return along same ray; do not reset estimated pose to zero or hide drift. */
+  if (!robotFault && RootPositive(poseX*poseX+poseY*poseY)>35.0) SetFault("CENTRE RETURN ERROR");
+  return !robotFault;
+}
+task main() {
+  int targetHeading;
+  int emptyScans=0;
+  unsigned long startedMS;
+  SetSensorLowspeed(SONAR_PORT); SetSensorColorFull(COLOR_PORT); Wait(500);
+  ResetOdometry();
+  if (!ArmRobot("P1 RING CENTRE")) { FinishDisplay(""); return; }
+  if (!OpenAppendLog("Ring.txt",16000)) { FinishDisplay(""); return; }
+  WriteLog("RUN,Omar Zid,HARDWARE_ACQUISITION,positions are estimates,units:mm/deg");
+  startedMS=CurrentTick();
+  while (!robotFault && emptyScans<2) {
+    targetHeading=FindObjectHeading();
+    if (targetHeading<0) emptyScans++;
+    else {
+      emptyScans=0;
+      if (ejectCount>=MAX_EJECTED) SetFault("OBJECT MAP FULL");
+      else PushAndReturn(targetHeading);
+    }
+    if (CurrentTick()-startedMS>MAX_RUN_MS) SetFault("RING RUN TIMEOUT");
+    CheckAbort();
+  }
+  WriteLog(StrCat("VERIFY,empty_full_scans,",NumToStr(emptyScans),",push_events,",NumToStr(ejectCount)));
+  CloseLog(); RingMap(); FinishDisplay("CLEAN SCAN / STOP");
+}

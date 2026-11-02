@@ -1,0 +1,14 @@
+OMAR ZID - UNIVERSITY ROBOTICS DAY
+
+Online: https://tsarumar.github.io/nxt/
+
+Offline: extract the whole ZIP, then double-click index.html.
+If it opens as code, choose Open with > Microsoft Edge or Chrome.
+Keep kit, index.html, styles.css, app.js and guide-content.js together.
+
+Follow the seven steps. Play each project, record the result, and practice your
+explanation. Click Save my notes before leaving the university computer.
+To move your progress, use Save progress file and Load progress file.
+
+The demonstration shows computer simulations. Real NXT tests are a separate
+stage and require the robot, compiler, calibration and recorded physical results.

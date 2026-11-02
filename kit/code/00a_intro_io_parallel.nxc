@@ -1,0 +1,47 @@
+/* Omar Zid | Warm-up: buttons, motors, sonar, parallel tasks, mutex and logging.
+   Lift wheels for first test. LEFT/RIGHT rotate B; release stops it. C is off. */
+#include "common_config.nxc"
+mutex sampleMutex;
+int sharedRangeCM=255;
+bool quitWarmup=false;
+
+task ReadSensors() {
+  int nextRange;
+  while (!quitWarmup) {
+    nextRange=SensorUS(SONAR_PORT);
+    Acquire(sampleMutex); sharedRangeCM=nextRange; Release(sampleMutex);
+    Wait(50);
+  }
+}
+task ButtonMotors() {
+  while (!quitWarmup) {
+    if (ButtonPressed(BTNLEFT,false)) OnRevEx(LEFT_MOTOR,15,RESET_NONE);
+    else if (ButtonPressed(BTNRIGHT,false)) OnFwdEx(LEFT_MOTOR,15,RESET_NONE);
+    else OffEx(LEFT_MOTOR,RESET_NONE);
+    Wait(10);
+  }
+  OffEx(LEFT_MOTOR,RESET_NONE);
+}
+task main() {
+  int rangeCopy;
+  unsigned long startMS;
+  SetSensorLowspeed(SONAR_PORT); Wait(500);
+  if (!ArmRobot("INTRO IO LIFT")) { FinishDisplay(""); return; }
+  if (!OpenAppendLog("IntroIO.txt",8000)) { FinishDisplay(""); return; }
+  WriteLog("Omar Zid,HARDWARE_ACQUISITION,elapsed_ms,sonar_cm,motor_B_deg");
+  startMS=CurrentTick();
+  start ReadSensors; start ButtonMotors;
+  while (!CheckAbort() && CurrentTick()-startMS<30000) {
+    Acquire(sampleMutex); rangeCopy=sharedRangeCM; Release(sampleMutex);
+    ClearScreen(); TextOut(0,LCD_LINE1,"PARALLEL IO");
+    TextOut(0,LCD_LINE3,"Sonar cm:"); NumOut(60,LCD_LINE3,rangeCopy);
+    TextOut(0,LCD_LINE4,"B degrees:"); NumOut(60,LCD_LINE4,MotorTachoCount(LEFT_MOTOR));
+    TextOut(0,LCD_LINE6,"LEFT/RIGHT move B");
+    WriteLog(StrCat(NumToStr(CurrentTick()-startMS),",",NumToStr(rangeCopy),",",NumToStr(MotorTachoCount(LEFT_MOTOR))));
+    Wait(100);
+  }
+  /* Cooperative exit keeps this program compatible with standard firmware.
+     The stop-task statement would require enhanced firmware. */
+  quitWarmup=true; Wait(150);
+  StopDrive(); CloseLog(); FinishDisplay("IO COMPLETE");
+}

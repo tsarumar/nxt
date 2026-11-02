@@ -1,0 +1,192 @@
+{
+  "seed": 20261014,
+  "status": "SIMULATION \u2014 no physical measurement claim",
+  "results": {
+    "intro_best_heading_deg": 30,
+    "intro_best_score_cm": 214.33333333333334,
+    "intro_final_distance_mm": 678.0000000000024,
+    "intro_stop_time_s": 5.75,
+    "intro_scan_samples": 108,
+    "motor_trials": 60,
+    "motor_calibration_gain": 1.0031537336150889,
+    "motor_calibration_offset_deg": 0.7287966952582207,
+    "motor_mean_absolute_error_deg": 0.7833333333333333,
+    "motor_worst_mean_error_deg": -1.6000000000000227,
+    "sonar_distance_trials": 80,
+    "sonar_angular_trials": 340,
+    "sonar_first_change_delay_ms": 70,
+    "sonar_settling_delay_ms": 150,
+    "color_trials": 270,
+    "color_accuracy_pct": 97.03703703703704,
+    "color_classification_delay_ms": 70,
+    "gyro_corrected_heading_deg": 90.06084797656843,
+    "gyro_truth_heading_deg": 90.00000000000033
+  },
+  "checks": [
+    {
+      "check": "Motor test coverage",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Independent-angle observations exist",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Calibration recovers injected gain",
+      "passed": true,
+      "detail": "gain=1.0031537"
+    },
+    {
+      "check": "Negative command reverses direction",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Counter reset preserves physical shaft",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Wheel distance dimensional conversion",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Sonar missing echo excluded from statistics",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Sonar distance trials",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Sonar angular experiment count",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Cached reads do not count as fresh updates",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Read latency differs from physical response",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Color factorial coverage",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "RGB/blank channel logging",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Color confusion matrix total",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Color output responds after physical step",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Color normalization uses same-condition white reference",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Gyro integrated truth equals ninety degree turn",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Stationary bias calibration improves turn integral",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Scanner covers unique full-circle headings",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Scanner stores three observations per heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Best direction uses neighbor minimum",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Red stop finishes inside modeled red strip",
+      "passed": true,
+      "detail": "terminal=678.000 mm"
+    },
+    {
+      "check": "Terminal speed is zero",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Stop event has two confirmed red observations",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Scanner avoids obstacle contact",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: intro_scan_polar.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: intro_stop_trace.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: motor_error.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: sonar_accuracy.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: sonar_detection_sweep.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: sonar_step_response.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: color_light_distance.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: color_response.png",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}

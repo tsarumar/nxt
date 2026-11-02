@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Omar Zid's simple university robotics walkthrough. Follow one study day, test the demonstrations, practice your explanation and download your notes.">
+  <meta name="theme-color" content="#176b50">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <title>Omar Zid · Your robotics day</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="guide-content.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#step-title">Skip to the current step</a>
+  <header class="topbar">
+    <a class="identity" href="#start"><span class="brand-mark" aria-hidden="true">OZ</span><span><strong>Omar Zid</strong><small>Informatics in Robotics</small></span></a>
+    <div class="top-actions"><a href="kit/Start_Here.html" target="_blank" rel="noopener">Open demo <span aria-hidden="true">↗</span></a><button type="button" id="export-top" class="primary">Save my notes</button></div>
+  </header>
+  <div class="workspace">
+    <aside class="sidebar">
+      <div class="sidebar-intro"><span class="eyebrow">Your plan</span><h1>Your robotics day</h1><p>Start at the top. Open the work, test it, then practice showing it.</p></div>
+      <div class="day-settings"><label for="study-date">Your study date</label><input type="date" id="study-date"><label for="start-time">Start at</label><input type="time" id="start-time" value="09:00"><p id="day-duration">6 hours of work + 70 minutes of breaks</p></div>
+      <div class="progress-summary"><div><strong id="step-count">0 of 7 steps done</strong><span id="percent">0%</span></div><progress id="progress" max="7" value="0" aria-label="Steps completed"></progress></div>
+      <nav id="steps-nav" aria-label="One-day steps"></nav>
+      <div class="sidebar-foot"><a href="downloads/Omar_Zid_University_Kit.zip" download>Download everything for offline use</a><a href="https://github.com/tsarumar/nxt" target="_blank" rel="noopener">Files on GitHub ↗</a><p>A suggested day, not a deadline. Give difficult parts more time.</p></div>
+    </aside>
+    <main id="main">
+      <div class="welcome"><div><span class="eyebrow">Open this on the university computer</span><p>No installation needed for the browser demonstration.</p></div><button type="button" id="health-check" class="quiet">Check the file links</button></div>
+      <p id="health-result" class="notice" role="status" hidden></p>
+      <div class="step-meta"><span id="step-position"></span><span id="time-block"></span></div>
+      <h2 id="step-title" tabindex="-1"></h2>
+      <p id="step-goal" class="lead"></p>
+      <section class="instructions" aria-labelledby="actions-title"><h3 id="actions-title">Do this</h3><ol id="actions-list"></ol><div id="step-links" class="resource-links"></div></section>
+      <section class="checks-section" aria-labelledby="check-title"><div class="section-heading"><h3 id="check-title">Check what happened</h3><span>Tick after you check it</span></div><div id="step-checks"></div></section>
+      <section class="explain-section" aria-labelledby="explain-title"><h3 id="explain-title">Say it in your own words</h3><p class="subtle">Say the answer aloud. Write a few words here so you can practice again.</p><div id="explain-fields"></div></section>
+      <section class="notes-section" aria-labelledby="notes-title"><h3 id="notes-title">Your notes</h3><ul id="note-prompts" class="subtle"></ul><label class="sr-only" for="step-notes">Notes for this step</label><textarea id="step-notes" rows="5" placeholder="What I tried, what I saw, what I still need help with…"></textarea><div class="save-line"><span id="save-status" role="status">Your notes stay in this browser.</span><button type="button" id="export-step" class="text-button">Save my notes to a file</button></div></section>
+      <section id="readiness" class="readiness" aria-labelledby="readiness-title" hidden><h3 id="readiness-title">Am I ready to show the computer work?</h3><div id="readiness-checks"></div><p id="readiness-result" class="readiness-result" role="status"></p><p id="readiness-note" class="subtle"></p><details><summary>If you also need a real NXT robot</summary><p>The website cannot test the physical robot. Work with your teacher on compiling the NXC programs, measuring and calibrating the build, checking the stopping controls, testing each task and saving real results. A real Bluetooth test needs two connected robots.</p><a href="kit/code/README.md" target="_blank" rel="noopener">Open the real-robot instructions ↗</a></details></section>
+      <div id="break-note" class="break-note" hidden></div>
+      <div class="step-footer"><button type="button" id="previous" class="quiet">← Previous</button><p id="finish-hint" role="status"></p><button type="button" id="finish-step" class="primary">Finish this step →</button></div>
+      <section class="take-notes" aria-labelledby="take-notes-title"><h3 id="take-notes-title">Before you leave this computer</h3><p>Save my notes downloads readable text. To move your ticks and answers to another computer too, use Save progress file below. Your notes are not uploaded to GitHub.</p><div class="note-tools"><button type="button" id="export-bottom" class="quiet">Download readable notes</button><details><summary>Move your progress to another computer</summary><p>Save a progress file here, then load that file on the next computer.</p><div class="note-tools"><button type="button" id="backup" class="quiet">Save progress file</button><label class="file-button" for="restore">Load progress file<input id="restore" type="file" accept="application/json,.json"></label></div></details><button type="button" id="clear" class="text-button">Clear this browser’s notes</button></div></section>
+      <footer class="page-footer"><span>Simulation results · calculations and source programs included.</span><a href="kit/Omar_Zid_Complete_Robotics.pdf" target="_blank" rel="noopener">Complete report ↗</a><a href="kit/00_READ_ME_FIRST.txt" target="_blank" rel="noopener">Short guide ↗</a></footer>
+    </main>
+  </div>
+  <dialog id="clear-dialog"><form method="dialog"><h2>Clear the notes on this browser?</h2><p>Download your notes first if you want to keep them. Exported files will stay on your computer.</p><div class="dialog-buttons"><button value="cancel" class="quiet">Keep my notes</button><button value="clear" class="danger">Clear notes</button></div></form></dialog>
+  <div id="toast" role="status" class="toast" hidden></div>
+  <noscript>This walkthrough needs JavaScript. You can still <a href="kit/00_READ_ME_FIRST.txt">read the simple guide</a> or <a href="kit/Omar_Zid_Complete_Robotics.pdf">open the complete report</a>.</noscript>
+</body>
+</html>
+

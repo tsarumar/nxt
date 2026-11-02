@@ -1,0 +1,1045 @@
+{
+  "checks": [
+    {
+      "check": "Eight editable assignment documents",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Student metadata 00_Introduction_Environment_scanner_demonstration",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No title border 00_Introduction_Environment_scanner_demonstration",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Native math present 00_Introduction_Environment_scanner_demonstration",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF exists 00_Introduction_Environment_scanner_demonstration",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF readable 00_Introduction_Environment_scanner_demonstration",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Student metadata 01_Report_1_Exploring_motors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No title border 01_Report_1_Exploring_motors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Native math present 01_Report_1_Exploring_motors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF exists 01_Report_1_Exploring_motors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF readable 01_Report_1_Exploring_motors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Student metadata 02_Report_2_Exploring_sonar_and_color_sensors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No title border 02_Report_2_Exploring_sonar_and_color_sensors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Native math present 02_Report_2_Exploring_sonar_and_color_sensors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF exists 02_Report_2_Exploring_sonar_and_color_sensors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF readable 02_Report_2_Exploring_sonar_and_color_sensors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Student metadata 03_Project_1_Clean_the_Ring",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No title border 03_Project_1_Clean_the_Ring",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Native math present 03_Project_1_Clean_the_Ring",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF exists 03_Project_1_Clean_the_Ring",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF readable 03_Project_1_Clean_the_Ring",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Student metadata 04_Project_2_SCANNER",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No title border 04_Project_2_SCANNER",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Native math present 04_Project_2_SCANNER",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF exists 04_Project_2_SCANNER",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF readable 04_Project_2_SCANNER",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Student metadata 05_Project_3_Obstacle_Avoidance",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No title border 05_Project_3_Obstacle_Avoidance",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Native math present 05_Project_3_Obstacle_Avoidance",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF exists 05_Project_3_Obstacle_Avoidance",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF readable 05_Project_3_Obstacle_Avoidance",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Student metadata 06_Project_4_Single_Sensor_PID_Line_Follower",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No title border 06_Project_4_Single_Sensor_PID_Line_Follower",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Native math present 06_Project_4_Single_Sensor_PID_Line_Follower",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF exists 06_Project_4_Single_Sensor_PID_Line_Follower",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF readable 06_Project_4_Single_Sensor_PID_Line_Follower",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Student metadata 07_Kinematics_exercise_solutions",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No title border 07_Kinematics_exercise_solutions",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Native math present 07_Kinematics_exercise_solutions",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF exists 07_Kinematics_exercise_solutions",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF readable 07_Kinematics_exercise_solutions",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Student metadata Omar_Zid_Complete_Robotics",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No title border Omar_Zid_Complete_Robotics",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Native math present Omar_Zid_Complete_Robotics",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF exists Omar_Zid_Complete_Robotics",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "PDF readable Omar_Zid_Complete_Robotics",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Balanced source 00a_intro_io_parallel.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "One main task 00a_intro_io_parallel.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No unfinished source markers 00a_intro_io_parallel.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Balanced source 00_intro_scan.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "One main task 00_intro_scan.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No unfinished source markers 00_intro_scan.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Balanced source 01_motor_measurements.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "One main task 01_motor_measurements.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No unfinished source markers 01_motor_measurements.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Balanced source 02_sensor_measurements.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "One main task 02_sensor_measurements.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No unfinished source markers 02_sensor_measurements.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Balanced source 03_project1_clean_ring.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "One main task 03_project1_clean_ring.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No unfinished source markers 03_project1_clean_ring.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Balanced source 04b_barcode_receiver.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "One main task 04b_barcode_receiver.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No unfinished source markers 04b_barcode_receiver.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Balanced source 04_project2_barcode.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "One main task 04_project2_barcode.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No unfinished source markers 04_project2_barcode.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Balanced source 05_project3_obstacle_navigation.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "One main task 05_project3_obstacle_navigation.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No unfinished source markers 05_project3_obstacle_navigation.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Balanced source 06_project4_pid_line.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "One main task 06_project4_pid_line.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No unfinished source markers 06_project4_pid_line.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Balanced source common_config.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No unfinished source markers common_config.nxc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 2",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 2",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 2",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 7",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 7",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 7",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 8",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 8",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 8",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 9",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 9",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 9",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 11",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 11",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 11",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 12",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 12",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 12",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 13",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 13",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 13",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 14",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 14",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 14",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 15",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 15",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 15",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 16",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 16",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 16",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 17",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 17",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 17",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 18",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 18",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 18",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 19",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 19",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 19",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 20",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 20",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 20",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 21",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 21",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 21",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 22",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 22",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 22",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 23",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 23",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 23",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 24",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 24",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 24",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 25",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 25",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 25",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 26",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 26",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 26",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 27",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 27",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 27",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 28",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 28",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 28",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 29",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 29",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 29",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 30",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 30",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 30",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 31",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 31",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 31",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 32",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 32",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 32",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 33",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 33",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 33",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 34",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 34",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 34",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 35",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 35",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 35",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 36",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 36",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 36",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 37",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 37",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 37",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 38",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 38",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 38",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 39",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 39",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 39",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 40",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 40",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 40",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No text outside page 41",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No replacement glyph 41",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "No empty page 41",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Laboratory self checks",
+      "passed": true,
+      "detail": "33"
+    },
+    {
+      "check": "All ring scene objects expelled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Complete PID lap",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Scanner correct at recommended speeds",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Obstacle body clearance",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Replay has final sample ring",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Replay has final sample scanner",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Replay has final sample obstacle",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Replay has final sample line",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "check_count": 207,
+  "all_passed": true,
+  "combined_pdf_pages": 41,
+  "hardware_compiled": false,
+  "physical_robot_tested": false,
+  "bluetooth_hardware_tested": false
+}

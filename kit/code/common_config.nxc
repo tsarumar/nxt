@@ -1,0 +1,250 @@
+/* Omar Zid | Shared NXT 2.0 configuration and feedback motion.
+   Assumptions, not hardware measurements: wheels 56 mm; track 120 mm.
+   Positive heading is anticlockwise; x is the original forward line; y is left.
+   Compile individual task files with NBC/NXC -v=128 (standard NXT 2.0).
+*/
+#ifndef OMAR_COMMON_CONFIG
+#define OMAR_COMMON_CONFIG
+#define LEFT_MOTOR OUT_B
+#define RIGHT_MOTOR OUT_C
+#define DRIVE OUT_BC
+#define COLOR_PORT IN_1
+#define SONAR_PORT IN_4
+#define WHEEL_DIAMETER_MM 56.0
+#define TRACK_MM 120.0
+#define PI_VALUE 3.14159265
+#define SONAR_OFFSET_MM 70.0
+#define MM_PER_DEG (PI_VALUE * WHEEL_DIAMETER_MM / 360.0)
+#define MAX_POWER 60
+#define POLL_MS 10
+
+bool robotFault = false;
+string robotFaultText = "";
+float poseX = 0.0;
+float poseY = 0.0;
+float poseHeading = 0.0;
+float pathLength = 0.0;
+long previousLeft = 0;
+long previousRight = 0;
+byte logHandle;
+bool logIsOpen = false;
+unsigned int logStatus = NO_ERR;
+
+float AbsFloat(float value) {
+  if (value < 0.0) return -value;
+  return value;
+}
+long AbsLong(long value) {
+  if (value < 0) return -value;
+  return value;
+}
+int ClampPower(int value) {
+  if (value > MAX_POWER) return MAX_POWER;
+  if (value < -MAX_POWER) return -MAX_POWER;
+  return value;
+}
+float WrapDegrees(float angle) {
+  while (angle > 180.0) angle -= 360.0;
+  while (angle <= -180.0) angle += 360.0;
+  return angle;
+}
+/* Bhaskara sine approximation avoids enhanced-firmware trigonometric opcodes.
+   Maximum absolute sine error is approximately 0.0017. */
+float SineDegrees(float angle) {
+  float signValue = 1.0;
+  float productValue;
+  angle = WrapDegrees(angle);
+  if (angle < 0.0) { angle = -angle; signValue = -1.0; }
+  productValue = angle * (180.0 - angle);
+  return signValue * 4.0 * productValue / (40500.0 - productValue);
+}
+float CosineDegrees(float angle) { return SineDegrees(angle + 90.0); }
+float RootPositive(float value) {
+  float estimate;
+  int iteration;
+  if (value <= 0.0) return 0.0;
+  estimate = value;
+  if (estimate < 1.0) estimate = 1.0;
+  for (iteration = 0; iteration < 18; iteration++)
+    estimate = 0.5 * (estimate + value / estimate);
+  return estimate;
+}
+float BearingDegrees(float dx, float dy) {
+  float ratio;
+  float angle;
+  float ax = AbsFloat(dx);
+  float ay = AbsFloat(dy);
+  if (ax + ay < 0.001) return 0.0;
+  if (ax >= ay) {
+    ratio = ay / ax;
+    angle = ratio * (45.0 + 15.64 * (1.0 - ratio));
+  } else {
+    ratio = ax / ay;
+    angle = 90.0 - ratio * (45.0 + 15.64 * (1.0 - ratio));
+  }
+  if (dx < 0.0) angle = 180.0 - angle;
+  if (dy < 0.0) angle = -angle;
+  return angle;
+}
+void StopDrive() { OffEx(DRIVE, RESET_NONE); }
+void SetDrive(int leftPower, int rightPower) {
+  if (robotFault) { StopDrive(); return; }
+  leftPower = ClampPower(leftPower);
+  rightPower = ClampPower(rightPower);
+  if (leftPower == 0) OffEx(LEFT_MOTOR, RESET_NONE);
+  else if (leftPower > 0) OnFwdEx(LEFT_MOTOR, leftPower, RESET_NONE);
+  else OnRevEx(LEFT_MOTOR, -leftPower, RESET_NONE);
+  if (rightPower == 0) OffEx(RIGHT_MOTOR, RESET_NONE);
+  else if (rightPower > 0) OnFwdEx(RIGHT_MOTOR, rightPower, RESET_NONE);
+  else OnRevEx(RIGHT_MOTOR, -rightPower, RESET_NONE);
+}
+void SetFault(string reason) {
+  robotFault = true;
+  robotFaultText = reason;
+  StopDrive();
+}
+bool CheckAbort() {
+  if (ButtonPressed(BTNEXIT, false)) SetFault("USER STOP");
+  return robotFault;
+}
+void ResetOdometry() {
+  StopDrive();
+  ResetRotationCount(DRIVE);
+  Wait(30);
+  previousLeft = MotorRotationCount(LEFT_MOTOR);
+  previousRight = MotorRotationCount(RIGHT_MOTOR);
+  poseX = 0.0; poseY = 0.0; poseHeading = 0.0; pathLength = 0.0;
+}
+void UpdateOdometry() {
+  long nowLeft = MotorRotationCount(LEFT_MOTOR);
+  long nowRight = MotorRotationCount(RIGHT_MOTOR);
+  float leftMM = (nowLeft - previousLeft) * MM_PER_DEG;
+  float rightMM = (nowRight - previousRight) * MM_PER_DEG;
+  float centreMM = 0.5 * (leftMM + rightMM);
+  float headingChange = (rightMM - leftMM) * 180.0 / (PI_VALUE * TRACK_MM);
+  float middleHeading = poseHeading + 0.5 * headingChange;
+  poseX += centreMM * CosineDegrees(middleHeading);
+  poseY += centreMM * SineDegrees(middleHeading);
+  poseHeading = WrapDegrees(poseHeading + headingChange);
+  pathLength += AbsFloat(centreMM);
+  previousLeft = nowLeft; previousRight = nowRight;
+}
+/* Non-blocking motor commands monitored by feedback, stall check and timeout.
+   Caller requests signed shaft degrees. Never reset counts while tracking pose. */
+bool MoveWheelDegrees(float targetLeft, float targetRight, int powerValue, unsigned long timeoutMS) {
+  long startLeft = MotorRotationCount(LEFT_MOTOR);
+  long startRight = MotorRotationCount(RIGHT_MOTOR);
+  long checkpointLeft = startLeft;
+  long checkpointRight = startRight;
+  unsigned long startedMS = CurrentTick();
+  unsigned long checkpointMS = startedMS;
+  bool leftDone = AbsFloat(targetLeft) < 1.0;
+  bool rightDone = AbsFloat(targetRight) < 1.0;
+  long movedLeft;
+  long movedRight;
+  float remainingLeft;
+  float remainingRight;
+  int leftCommand;
+  int rightCommand;
+  powerValue = AbsLong(powerValue);
+  while ((!leftDone || !rightDone) && !CheckAbort()) {
+    movedLeft = MotorRotationCount(LEFT_MOTOR) - startLeft;
+    movedRight = MotorRotationCount(RIGHT_MOTOR) - startRight;
+    remainingLeft = AbsFloat(targetLeft) - AbsLong(movedLeft);
+    remainingRight = AbsFloat(targetRight) - AbsLong(movedRight);
+    leftDone = remainingLeft <= 1.0;
+    rightDone = remainingRight <= 1.0;
+    leftCommand = powerValue;
+    rightCommand = powerValue;
+    if (remainingLeft < 20.0) leftCommand = 12;
+    if (remainingRight < 20.0) rightCommand = 12;
+    if (targetLeft < 0.0) leftCommand = -leftCommand;
+    if (targetRight < 0.0) rightCommand = -rightCommand;
+    if (leftDone) leftCommand = 0;
+    if (rightDone) rightCommand = 0;
+    SetDrive(leftCommand, rightCommand);
+    UpdateOdometry();
+    if (CurrentTick() - startedMS > timeoutMS) SetFault("MOTION TIMEOUT");
+    if (CurrentTick() - checkpointMS >= 700) {
+      if ((!leftDone && AbsLong(MotorRotationCount(LEFT_MOTOR)-checkpointLeft) < 2) ||
+          (!rightDone && AbsLong(MotorRotationCount(RIGHT_MOTOR)-checkpointRight) < 2))
+        SetFault("MOTOR STALL");
+      checkpointLeft = MotorRotationCount(LEFT_MOTOR);
+      checkpointRight = MotorRotationCount(RIGHT_MOTOR);
+      checkpointMS = CurrentTick();
+    }
+    Wait(POLL_MS);
+  }
+  StopDrive(); Wait(40); UpdateOdometry();
+  return !robotFault;
+}
+bool MoveMM(float distanceMM, int powerValue) {
+  float shaftDegrees = distanceMM / MM_PER_DEG;
+  return MoveWheelDegrees(shaftDegrees, shaftDegrees, powerValue, 15000);
+}
+bool TurnDegrees(float bodyDegrees) {
+  float shaftDegrees = bodyDegrees * TRACK_MM / WHEEL_DIAMETER_MM;
+  return MoveWheelDegrees(-shaftDegrees, shaftDegrees, 22, 12000);
+}
+bool TurnTo(float absoluteDegrees) { return TurnDegrees(WrapDegrees(absoluteDegrees-poseHeading)); }
+/* 255 means no usable echo; caller must distinguish it from measured clearance. */
+int SonarCM() { return SensorUS(SONAR_PORT); }
+int SonarMeanCM(int countValue) {
+  long sumValue = 0;
+  int indexValue;
+  int readingValue;
+  for (indexValue=0; indexValue<countValue; indexValue++) {
+    if (CheckAbort()) return -1;
+    readingValue = SonarCM();
+    if (readingValue <= 0) { SetFault("SONAR ZERO/FAULT"); return -1; }
+    sumValue += readingValue;
+    Wait(35);
+  }
+  return sumValue / countValue;
+}
+bool OpenAppendLog(string fileName, unsigned int allocatedBytes) {
+  unsigned int remainingBytes;
+  logStatus = OpenFileAppend(fileName, remainingBytes, logHandle);
+  if (logStatus == LDR_FILENOTFOUND)
+    logStatus = CreateFile(fileName, allocatedBytes, logHandle);
+  logIsOpen = logStatus == NO_ERR;
+  if (!logIsOpen) SetFault("FILE OPEN FAILED");
+  return logIsOpen;
+}
+bool WriteLog(string textValue) {
+  unsigned int writtenBytes;
+  if (!logIsOpen) return false;
+  logStatus = WriteLnString(logHandle, textValue, writtenBytes);
+  if (logStatus != NO_ERR) { SetFault("FILE WRITE FAILED"); return false; }
+  return true;
+}
+void CloseLog() {
+  if (logIsOpen) {
+    logStatus = CloseFile(logHandle);
+    logIsOpen = false;
+    if (logStatus != NO_ERR) SetFault("FILE CLOSE FAILED");
+  }
+}
+bool ArmRobot(string titleText) {
+  StopDrive();
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "OMAR ZID");
+  TextOut(0, LCD_LINE2, titleText);
+  TextOut(0, LCD_LINE4, "ENTER to start");
+  TextOut(0, LCD_LINE5, "EXIT to stop");
+  while (ButtonPressed(BTNCENTER, false)) Wait(20);
+  while (!ButtonPressed(BTNCENTER, false)) {
+    if (CheckAbort()) return false;
+    Wait(20);
+  }
+  while (ButtonPressed(BTNCENTER, false)) Wait(20);
+  return true;
+}
+void FinishDisplay(string messageText) {
+  StopDrive();
+  TextOut(0, LCD_LINE7, "                ");
+  if (robotFault) TextOut(0, LCD_LINE7, robotFaultText);
+  else TextOut(0, LCD_LINE7, messageText);
+  Wait(8000);
+}
+#endif

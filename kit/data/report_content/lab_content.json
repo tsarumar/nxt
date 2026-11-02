@@ -1,0 +1,837 @@
+{
+  "student": "Omar Zid",
+  "status": "SIMULATION — no physical measurement claim",
+  "seed": 20261014,
+  "reports": [
+    {
+      "id": "introduction",
+      "title": "Introduction — Environment scanner demonstration",
+      "source": "Screenshot_1.png: Introduction (2h — none reports)",
+      "summary": "Omar Zid | Working numerical demonstration. Scanned 36 headings; selected 30°; stopped on the simulated red strip at 678.0 mm. This optional evidence note supports the introduction's final task; the supplied page says no formal report.",
+      "sections": [
+        {
+          "heading": "1. Task and demonstrable outcome",
+          "paragraphs": [
+            "The introduction requests a 360° environment scanner that logs observations, visualizes them on the screen, chooses the most free direction, drives that way and stops on red. The supplied page labels this session ‘none reports’. This short evidence note accompanies the code and data so the teacher can inspect the complete calculation and outcome.",
+            "The demonstration models a differential-drive robot using NXC-style motor/sensor control concepts. The scan, chosen direction and stopping trace are numerically executed. All environment distances, sensor observations and timing are simulated. A BricxCC installation, brick connection, download, physical screen and device memory operation are not claimed as completed hardware tasks."
+          ]
+        },
+        {
+          "heading": "2. Geometry, environment and scan method",
+          "paragraphs": [
+            "Wheel diameter is assumed D = 56 mm; wheel-centre track is assumed B = 120 mm. The model room spans x = −1000 to 2000 mm and y = −1200 to 1500 mm. Two circular obstacles are centred at (900, 0) mm with radius 200 mm and (−500, −500) mm with radius 180 mm. The initial robot centre is (0, 0); heading zero points along +x and positive angles are counterclockwise.",
+            "An exact geometric ray cast provides simulator truth. Every 10° heading has three sonar observations, generated with the same scale/offset/noise form as Report 2. The three-reading mean is stored with its sample standard deviation. A whole-body in-place rotation is used conceptually, not a sensor turret; scanning therefore requires opposite wheel movements and a settled read after each turn.",
+            "The score at each heading is the minimum mean clearance of that heading and its adjacent ±10° headings. This avoids choosing a narrow isolated maximum. A three-sample smoothing rule does not prove that a real robot fits through a gap; body width, sensor offset, obstacle shape and angular uncertainty still require margin and checks."
+          ],
+          "calculations": [
+            "Body heading step ψ = 10° = 0.174533 rad. Wheel travel magnitude = Bψ/2 = 120 × 0.174533/2 = 10.472 mm.",
+            "Wheel shaft step magnitude = 360 × 10.472/(π × 56) = 21.429°. Rotate opposite wheels by ±21.429° for one ideal 10° body turn.",
+            "A 360° body scan requires 36 steps and ±771.429° wheel-shaft rotation in this geometry. Shaft angle is not body heading.",
+            "Score(θi) = min[mean d(θi−10°), mean d(θi), mean d(θi+10°)] with circular indexing."
+          ],
+          "figure": "data/labs/figures/intro_scan_polar.png",
+          "caption": "The grey outline is ray-cast truth; blue points are observed three-read means. The green line marks the selected heading and the red point marks the strip's onset."
+        },
+        {
+          "heading": "3. Scan selection and logged evidence",
+          "paragraphs": [
+            "The selected direction is 30°. Its mean observed clearance is 232.67 cm and its conservative neighboring score is 214.33 cm. Geometric truth along that ray is 2309.4 mm. The observed and true values differ because the declared sensor model includes scale, offset, noise and integer-centimeter reporting.",
+            "Store heading in degrees and range in centimeters in an on-brick file, with consistent column labels. The desktop simulation saves every raw trial in intro_scan_trials.csv and all means/scores in intro_scan_summary.csv. A simple brick display can show current heading/range, selected heading and motion state; the polar figure here is the detailed teacher-facing visualization.",
+            "When a real sonar returns a missing or invalid echo, label it unknown and do not treat it as guaranteed clear space. This scenario remains within the declared model's useful range. A real scanner also needs obstacle monitoring during the drive, a maximum travel limit, a manual stop and safe handling of failed sensor reads."
+          ],
+          "table": {
+            "headers": [
+              "Quantity",
+              "Simulated result"
+            ],
+            "rows": [
+              [
+                "Headings / observations",
+                "36 / 108"
+              ],
+              [
+                "Angle spacing",
+                "10°"
+              ],
+              [
+                "Selected heading",
+                "30°"
+              ],
+              [
+                "Mean range at chosen heading",
+                "232.67 cm"
+              ],
+              [
+                "Conservative score",
+                "214.33 cm"
+              ],
+              [
+                "True ray clearance",
+                "2309.4 mm"
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "4. Red detection, delay and stopping distance",
+          "paragraphs": [
+            "The robot drives at an assumed 120 mm/s. A red strip spans 650–740 mm along the chosen ray. Color is checked every 50 ms with an assumed 40 ms physical color delay. Two consecutive red observations command braking; deceleration is 600 mm/s². Speed and stopping-distance values are chosen for this simulation and are not motor power-to-speed specifications.",
+            "The brake command occurred at t = 5.55 s; the robot reached zero velocity at t = 5.75 s and x = 678.0 mm. The terminal point lies within the red strip. Remaining ray clearance was 163.1 cm. The red stop has a finite overrun and cannot be modeled as an instantaneous halt at 650 mm.",
+            "The complete event trace records physical surface, observed color, confirmation count, control state, velocity, traveled distance and remaining clearance. It distinguishes red detection from the final mechanical stop. The report's terminal distance refers to the robot centre; a physical sensor mounted ahead of the axle introduces an additional geometric offset."
+          ],
+          "calculations": [
+            "Nominal braking time = v/a = 120/600 = 0.200 s.",
+            "Braking distance = v²/(2a) = 120²/(2 × 600) = 12.0 mm.",
+            "Additional sensing/confirmation travel depends on phase: one 40 ms response delay contributes 4.8 mm; one 50 ms confirmation interval contributes 6.0 mm; polling phase can add up to 6.0 mm.",
+            "Terminal overrun beyond strip onset = 678.0 − 650 = 28.0 mm; observed finite-phase trace determines this value."
+          ],
+          "figure": "data/labs/figures/intro_stop_trace.png",
+          "caption": "Travel rises at the modeled drive speed and flattens during braking. The controller stops inside the red strip."
+        },
+        {
+          "heading": "5. Concurrent tasks, I/O and file handling",
+          "paragraphs": [
+            "A sensor/logging task can read sensors and update shared state while a movement task issues drive commands. Guard a shared snapshot with a mutex: acquire the lock, copy or update the small state structure, release the lock, then perform slow display/file operations outside the critical section. A mutex prevents inconsistent concurrent access; it does not make sensor data newer.",
+            "Buttons should provide start/stop or trial selection; the display should expose state and units. BricxCC offers brick tests, file management and a remote NXT Screen with polling, which supports inspecting a robot with a damaged or inaccessible screen. Files should be opened with a checked status, sized to hold the intended log, closed after writing and downloaded for analysis.",
+            "In a simulation, desktop CSV writing demonstrates logging successfully. The NXT file-system capacity, free space and BricxCC transfer remain hardware validation steps. The supplied short guide contains older timing notation; use the full tutorial/API millisecond convention consistently when implementing Wait and timers."
+          ]
+        },
+        {
+          "heading": "6. Reproducibility and conclusion",
+          "paragraphs": [
+            "All scan, score and stop-state checks passed. Seed 20261014 reproduces the same 30° selection and 678.0 mm terminal travel. The demonstration satisfies the introduction's functional sequence in the model and provides the teacher with visible calculations, plots and raw event data.",
+            "Run simulation/lab_simulations.py. Evidence files: intro_scan_trials.csv, intro_scan_summary.csv and intro_red_stop_trace.csv; plots: intro_scan_polar.png and intro_stop_trace.png. Hardware reproduction should replace room assumptions, wheel geometry, sensor offset and timing values with measured inputs while retaining the same logging and analysis method."
+          ]
+        }
+      ],
+      "references": [
+        "Supplied Screenshot_1.png: Introduction (2h — none reports), final Environment Scanner task.",
+        "Supplied __NXC_tutorial.pdf: sensors, tasks, mutexes and file operations.",
+        "Supplied _NXC_min.pdf: BricxCC basics; compare timing notation with the full tutorial before use."
+      ]
+    },
+    {
+      "id": "report_1",
+      "title": "Report 1 — Exploring motors",
+      "source": "Screenshot_2.png; __NXC_tutorial.pdf, pp. 31–34",
+      "summary": "Omar Zid | Reproducible simulation | 60 test trials. Largest mean signed angle error: -1.60° at -450° and power 80%. No physical experiment is claimed.",
+      "sections": [
+        {
+          "heading": "1. Aim and measurement plan",
+          "paragraphs": [
+            "The assignment asks for a program that displays the current motor-shaft position, checks commands of 45°, 450° and 650°, and investigates counter resets. A negative command and three powers are added to test direction and the effect of speed. The supplied tutorial explains limited-angle movement, braking and feedback regulation.",
+            "One motor represents a wheel-driven NXT system. Each angle/power combination has five simulated repetitions from a reset zero. An independent angle fixture provides the reference observation. Command angle, ideal simulator truth, integer tacho observation and external observation are stored in separate columns so agreement of two tacho-based values cannot masquerade as independent verification.",
+            "These are software-generated observations. The model tests calculation, logging and control logic, while the actual brick, loading, battery condition, friction and firmware behavior still require a hardware check. All numerical precision and uncertainty assumptions below belong to this model."
+          ]
+        },
+        {
+          "heading": "2. Declared model and calibration",
+          "paragraphs": [
+            "Geometry: wheel diameter D = 56 mm and wheel-centre track B = 120 mm are assumed construction values. Shaft angle is unwrapped; 450° and 650° represent more than one revolution. A power value is a control setting, not a measured angular velocity.",
+            "Injected tacho relation: raw = round(1.003 × true angle + 0.65° + noise), noise standard deviation 0.24°. The independent fixture has 0.35° noise and a 0.5° reporting step. The assumed tacho output step is 1°; neither step proves the physical hardware's accuracy. Calibration uses 35 independent readings at seven reference positions from −720° to +720°.",
+            "Least-squares calibration gave raw = 1.0031537 × external + 0.72880°. The residual standard deviation was 0.613°. Apply θcal = (raw − 0.72880)/1.0031537. The commanded angles are not used as the calibration response, preventing command error from being calibrated away.",
+            "Position truth includes a small power-dependent overshoot: signed mean increment 0.12° + 0.012° × power, plus trial noise σ = 0.12° + 0.007° × power. Motion time is |θ|/(5.6 × power) + 0.15 + 0.0015 × power seconds, plus 0.008 s noise, rounded to 1 ms. These constants are chosen for an illustrative simulation, not fitted to a real motor."
+          ]
+        },
+        {
+          "heading": "3. Results: angle, repeatability and motion time",
+          "paragraphs": [
+            "The reference mean is the average of five external observations. The signed error is mean reference − commanded angle. Sample standard deviation describes trial repeatability; it does not remove a systematic offset. Expanded uncertainty U with coverage factor k = 2 is calculated below and retained for every condition in motor_summary.csv.",
+            "Higher power shortened the modeled motion duration and generally increased overshoot and scatter. A small 45° command can have a noticeably larger percentage error than a 650° command even when the absolute error is similar. Thus angle error and time must both be reported."
+          ],
+          "table": {
+            "headers": [
+              "Command (°)",
+              "Power (%)",
+              "Ref. mean (°)",
+              "s (°)",
+              "Error (°)",
+              "Time (s)"
+            ],
+            "rows": [
+              [
+                "45",
+                "30",
+                "45.30",
+                "0.27",
+                "0.30",
+                "0.463"
+              ],
+              [
+                "45",
+                "50",
+                "45.70",
+                "1.04",
+                "0.70",
+                "0.388"
+              ],
+              [
+                "45",
+                "80",
+                "46.20",
+                "0.84",
+                "1.20",
+                "0.378"
+              ],
+              [
+                "450",
+                "30",
+                "450.50",
+                "0.35",
+                "0.50",
+                "2.877"
+              ],
+              [
+                "450",
+                "50",
+                "450.50",
+                "0.35",
+                "0.50",
+                "1.839"
+              ],
+              [
+                "450",
+                "80",
+                "450.50",
+                "0.94",
+                "0.50",
+                "1.277"
+              ],
+              [
+                "650",
+                "30",
+                "650.80",
+                "0.84",
+                "0.80",
+                "4.067"
+              ],
+              [
+                "650",
+                "50",
+                "651.00",
+                "0.35",
+                "1.00",
+                "2.550"
+              ],
+              [
+                "650",
+                "80",
+                "650.80",
+                "0.45",
+                "0.80",
+                "1.722"
+              ],
+              [
+                "-450",
+                "30",
+                "-450.40",
+                "0.42",
+                "-0.40",
+                "2.879"
+              ],
+              [
+                "-450",
+                "50",
+                "-450.50",
+                "0.61",
+                "-0.50",
+                "1.827"
+              ],
+              [
+                "-450",
+                "80",
+                "-451.60",
+                "0.42",
+                "-1.60",
+                "1.281"
+              ]
+            ]
+          },
+          "figure": "data/labs/figures/motor_error.png",
+          "caption": "Mean command errors use the independent reference, not the calibrated tacho itself. Each point represents five simulated trials."
+        },
+        {
+          "heading": "4. Worked calculations and uncertainty",
+          "paragraphs": [
+            "For the 450° command at power 50%, mean external angle = 450.50°, s = 0.354°, mean duration = 1.839 s. Raw rows are retained in motor_trials.csv so all means and scatter can be recalculated.",
+            "The uncertainty calculation treats the independent reference noise/reporting step as an additional conservative type-B component. Quantization of the tacho is already present in the calibration residuals; it is not added again to the external-reference uncertainty. This simplified budget excludes real mounting error, backlash, drift and load-dependent deformation."
+          ],
+          "calculations": [
+            "x̄ = Σxi/n; s = √[Σ(xi − x̄)²/(n − 1)].",
+            "e = 450.50° − 450° = 0.50°; relative error = 100 e/450 = 0.111%.",
+            "u_ref = √(0.35² + 0.5²/12) = 0.379°; U = 2√(s²/5 + u_ref²) = 0.82°.",
+            "s_wheel = πD θ/360 = π × 56 mm × 450.50/360 = 220.16 mm.",
+            "One degree at D = 56 mm corresponds to π × 56/360 = 0.489 mm of nominal rolling travel. This conversion assumes no slip.",
+            "For an in-place body turn ψ = 10°, each wheel travels ±Bψ/2 = ±10.472 mm (ψ in radians); required shaft angle = ±Bψ(deg)/D = ±21.429°. Body heading and shaft angle are different quantities."
+          ]
+        },
+        {
+          "heading": "5. Counter resets and displayed position",
+          "paragraphs": [
+            "The official NXC API distinguishes the tachometer count/limit reset from the program-relative rotation count reset. ResetTachoCount acts on the tacho counter and its limit goal. ResetRotationCount acts on the program-relative position counter read with MotorRotationCount. Resetting a counter changes its zero reference; it does not physically return the shaft to zero.",
+            "The exact trace below isolates reset semantics with relative movement increments. In a brick program, movement helpers may request their own counter resets; read values before and after the helper and verify which counter is displayed. Apply resets while stopped and allow the firmware update to complete before interpreting the result.",
+            "For a readable screen show target angle, current relative tacho angle, unwrapped program-relative angle and trial time with units. To show orientation within one revolution use ((angle % 360) + 360) % 360; retain the unwrapped angle in the file."
+          ],
+          "table": {
+            "headers": [
+              "Event",
+              "Physical shaft (°)",
+              "Tacho (°)",
+              "Program relative (°)"
+            ],
+            "rows": [
+              [
+                "Initial",
+                0,
+                0,
+                0
+              ],
+              [
+                "Relative move +450",
+                450,
+                450,
+                450
+              ],
+              [
+                "ResetTachoCount only",
+                450,
+                0,
+                450
+              ],
+              [
+                "Relative move -45 (no automatic reset)",
+                405,
+                -45,
+                405
+              ],
+              [
+                "ResetRotationCount only",
+                405,
+                -45,
+                0
+              ],
+              [
+                "Relative move +650 (no automatic reset)",
+                1055,
+                605,
+                650
+              ]
+            ]
+          }
+        },
+        {
+          "heading": "6. Conclusion and reproducibility",
+          "paragraphs": [
+            "The modeled motor performed both directions and all requested rotations. Across the 60 trials, mean absolute command error of the independent observations was 0.783°. This is a simulator result, not a real NXT accuracy claim.",
+            "The useful result is a traceable test method: an independent angle check, a calibration equation, repeated observations, signed/relative errors, uncertainty and elapsed time. Counter-reset behavior is explicit, so the screen can show what its zero means. For physical validation mark the shaft, measure the true rotation independently, repeat the same matrix and replace the generated CSVs with logged readings.",
+            "Reproduce with simulation/lab_simulations.py. Seed = 20261014. Files: motor_calibration.csv, motor_trials.csv, motor_summary.csv and motor_counter_reset_trace.csv. Self-checks cover trial count, independent readings, gain recovery, negative direction and zero-reference behavior."
+          ]
+        }
+      ],
+      "references": [
+        "Supplied Screenshot_2.png: Report_1 Exploring motors (4h).",
+        "Supplied __NXC_tutorial.pdf, pp. 31–34: limited-angle motion, sign convention and PID explanation.",
+        "NXC official API, Output module functions: https://bricxcc.sourceforge.net/nbc/nxcdoc/nxcapi/group___output_module_functions.html",
+        "NXC official API, ResetTachoCount: https://bricxcc.sourceforge.net/nbc/nxcdoc/nxcapi/group___output_module_functions_ga89b494fec2591253658a55cc74d7c6e7.html",
+        "NXC official API, ResetRotationCount: https://bricxcc.sourceforge.net/nbc/nxcdoc/nxcapi/group___output_module_functions_ga1f07b7f5f06116fffe738f699d0ce83f.html"
+      ]
+    },
+    {
+      "id": "report_2",
+      "title": "Report 2 — Exploring sonar and color sensors",
+      "source": "Screenshot_3.png; __NXC_tutorial.pdf, p. 21",
+      "summary": "Omar Zid | Reproducible simulation | 80 sonar distance trials, 340 angular trials and 270 color trials. Color classification: 97.0% in the declared model. Software read time, fresh sampling and physical response are reported separately.",
+      "sections": [
+        {
+          "heading": "1. Aim, apparatus model and procedure",
+          "paragraphs": [
+            "The task asks for sonar speed, accuracy and field of action; color speed, resolution, response to color and illumination; and the operating principle and uses of one further sensor. This report selects a single-axis rate gyroscope for the final part.",
+            "A simulated stationary rig positions a broad target at 5–240 cm, then sweeps a 20 cm target through −40° to +40° at two distances. A color rig varies six matte swatches, assumed ambient illumination 100/300/800 lux and sensor standoff 10/20/30 mm. Ten sonar and five color repetitions per condition retain raw readings. The target geometry, timing constants, signal steps and noise values below are assumptions, not verified LEGO specifications.",
+            "Distance references have an assumed standard uncertainty 0.20 cm. Lux values are controlled simulator inputs, not measured light-meter readings. Separate calibration data are generated before test trials. A fixed random seed makes every observation reproducible and identifiable as simulated."
+          ]
+        },
+        {
+          "heading": "2. Sonar calibration, accuracy and uncertainty",
+          "paragraphs": [
+            "The valid-range model returns round(1.006d + 0.30 cm + Gaussian noise), with noise σ = 0.25 cm + 0.004d. It deliberately returns a no-echo sentinel at d < 8 cm or d ≥ 250 cm. These boundaries and the 1 cm output step are illustrative model settings. No-echo values are not averaged as if they were target distances.",
+            "Thirty calibration observations at 20, 40 and 80 cm yielded y = 1.007567d + 0.00849 cm; residual standard deviation 0.538 cm. Correct distances using dcal = (y − b)/a. The independent test matrix shows maximum raw mean bias 1.90 cm; mean absolute calibrated individual error is 0.598 cm.",
+            "Sample s describes repeatability of the raw distance observations. Corrected bias compares the calibrated mean with the known model distance. Expanded uncertainty U uses k = 2 and includes mean repeatability, assumed reference uncertainty and linear-calibration prediction uncertainty. Long-distance values extrapolate beyond the 80 cm calibration range; their larger uncertainty and sensitivity to slope are retained."
+          ],
+          "table": {
+            "headers": [
+              "Truth cm (n)",
+              "Raw mean (cm)",
+              "s (cm)",
+              "Raw bias (cm)",
+              "Cal. bias (cm)",
+              "U cal. (cm)"
+            ],
+            "rows": [
+              [
+                "5 (0/10)",
+                "No echo",
+                "—",
+                "—",
+                "—",
+                "—"
+              ],
+              [
+                "10 (10/10)",
+                "10.40",
+                "0.52",
+                "0.40",
+                "0.31",
+                "0.62"
+              ],
+              [
+                "20 (10/10)",
+                "20.50",
+                "0.53",
+                "0.50",
+                "0.34",
+                "0.59"
+              ],
+              [
+                "40 (10/10)",
+                "40.50",
+                "0.53",
+                "0.50",
+                "0.19",
+                "0.56"
+              ],
+              [
+                "80 (10/10)",
+                "80.70",
+                "0.67",
+                "0.70",
+                "0.09",
+                "0.67"
+              ],
+              [
+                "120 (10/10)",
+                "120.80",
+                "0.63",
+                "0.80",
+                "-0.12",
+                "0.83"
+              ],
+              [
+                "180 (10/10)",
+                "181.00",
+                "1.05",
+                "1.00",
+                "-0.37",
+                "1.31"
+              ],
+              [
+                "240 (10/10)",
+                "241.90",
+                "1.52",
+                "1.90",
+                "0.07",
+                "1.84"
+              ]
+            ]
+          },
+          "calculations": [
+            "e = x̄ − dref; MAE = Σ|xi − dref|/n; s = √[Σ(xi − x̄)²/(n − 1)].",
+            "u_cal(d) = (s_fit/a)√[1/Ncal + (d − d̄cal)²/Σ(dj − d̄cal)²].",
+            "U = 2√[s_corrected²/n + (0.20 cm)² + u_cal(d)²]. Output quantization is present in trial scatter and calibration residuals, so it is not added twice.",
+            "A 1 cm reporting step does not imply ±1 cm accuracy. Systematic bias, reflectivity, target angle, multiple echoes and temperature can affect a physical sensor."
+          ],
+          "figure": "data/labs/figures/sonar_accuracy.png",
+          "caption": "Separate calibration reduces the injected scale/offset error. It does not guarantee real-world accuracy."
+        },
+        {
+          "heading": "3. Angular field of action",
+          "paragraphs": [
+            "Detection is generated using P = 1/[1 + exp((|α| − h)/2.5°)], where h = 12° + atan(10 cm/d) in degrees. The assumed 12° core and 2.5° transition width are model constants. Target width contributes to the apparent field, so a measured detection cone is specific to this target and range.",
+            "At least 8 detections out of 10 defined the operational threshold. For the 20 cm target at 50 cm, accepted sampled angles ran from -15° to 15°; at 100 cm they ran from -10° to 15°. The sweep spacing is 5°; threshold boundaries are therefore only localized to approximately one angular sample, and finite trials add binomial uncertainty.",
+            "A physical field-of-view test must use a fixed object and a repeatable turntable, record misses and repeated hits, and state target material, dimensions, distance and criterion. A single sonar reading cannot prove that the entire surrounding region is clear."
+          ],
+          "figure": "data/labs/figures/sonar_detection_sweep.png",
+          "caption": "Detection percentage versus off-axis angle for two distances. These curves are generated by the declared model and do not assert a manufacturer's beam specification."
+        },
+        {
+          "heading": "4. Speed: software read, update interval and physical response",
+          "paragraphs": [
+            "Mean simulated sonar read-call latency is 3.18 ms. A software loop reads every 20 ms, while the assumed sonar state refreshes every 80 ms. Faster polling repeats cached data. A target step from 120 to 40 cm occurs at 250 ms; response delay is 40 ms and time constant 25 ms. The first changed observation appears after 70 ms, and the reading reaches ±2 cm of its final value after 150 ms.",
+            "These three times answer different questions: how long a function call blocks; how often fresh measurements become available; and how quickly a changed physical target affects the reported output. Only the latter two constrain a stopping controller. Reading faster is useful for scheduling but does not manufacture fresh sensor information.",
+            "For the color step test, software reads average 2.11 ms; assumed fresh updates occur every 40 ms. The physical model has 30 ms delay and 20 ms time constant. A white-to-red step at 250 ms is first classified red after 70 ms. The sampled 10–90% green-channel transition spans 40 ms; 40 ms sampling limits its time resolution."
+          ],
+          "figure": "data/labs/figures/sonar_step_response.png",
+          "caption": "A 20 ms polling loop repeatedly sees the same value between fresh 80 ms updates. The physical response time is much longer than the read-call latency."
+        },
+        {
+          "heading": "5. Color channels, calibration and lighting response",
+          "paragraphs": [
+            "Full-color logs contain simulated raw red/green/blue and a blank ambient channel. Per-channel dark offsets are (22, 25, 21) counts and gains (1.00, 0.91, 1.07). Raw counts follow dark + 0.18 × lux + gain × 800 × ρ/[1 + (h/18 mm)²] + noise. Channel noise σ = 4.5 + 0.006 × lux counts. A white reference under the same light and standoff normalizes each channel.",
+            "The ratio norm = (raw − dark − blank)/(white − dark − blank) estimates reflectance in the model. Raw RGB responds to mounting distance and ambient light; subtracting the blank and dividing by a matched white reduces these changes. Normalized ratios are custom calculated values. They are not claimed to be the firmware's normalized arrays or its built-in classifier.",
+            "NXC exposes full-color, red/green/blue illumination and no-light configurations. ReadSensorColorEx returns a color value plus raw, normalized and scaled arrays; the raw/array API requires compatible NXT 2.0 firmware. The custom CSV separately records our reproducible classifier. Red-only illumination yields an intensity measurement; no-light mode supports ambient measurement and comparison."
+          ],
+          "table": {
+            "headers": [
+              "Swatch",
+              "Raw R mean ± s",
+              "Norm R",
+              "Norm G",
+              "Norm B",
+              "Correct n"
+            ],
+            "rows": [
+              [
+                "red",
+                "365.0 ± 5.15",
+                "0.810",
+                "0.104",
+                "0.076",
+                "5/5"
+              ],
+              [
+                "green",
+                "119.4 ± 4.83",
+                "0.125",
+                "0.697",
+                "0.112",
+                "5/5"
+              ],
+              [
+                "blue",
+                "105.8 ± 3.03",
+                "0.085",
+                "0.153",
+                "0.780",
+                "5/5"
+              ],
+              [
+                "yellow",
+                "348.6 ± 8.91",
+                "0.764",
+                "0.677",
+                "0.075",
+                "5/5"
+              ],
+              [
+                "white",
+                "376.2 ± 8.07",
+                "0.840",
+                "0.847",
+                "0.837",
+                "5/5"
+              ],
+              [
+                "black",
+                "87.0 ± 4.85",
+                "0.036",
+                "0.042",
+                "0.044",
+                "5/5"
+              ]
+            ]
+          },
+          "calculations": [
+            "ρR = (Rraw − Rdark − blank)/(Rwhite − Rdark − blank); equivalent expressions for G and B.",
+            "Red at 300 lux and 20 mm: normalized R mean = 0.810, sample s = 0.0232. Mean standard error = s/√5 = 0.0104.",
+            "The assumed raw output step is one model count; trial σR = 5.15 counts. A 3s discrimination criterion is approximately 15.4 counts or 0.069 in normalized R under this condition. This is practical modeled resolution, not sensor ADC bit depth."
+          ],
+          "figure": "data/labs/figures/color_light_distance.png",
+          "caption": "Each point averages five red-swatch trials. Ambient light raises raw readings and larger standoff reduces active reflection."
+        },
+        {
+          "heading": "6. Classification and resolution limits",
+          "paragraphs": [
+            "The classifier first separates black (all normalized channels < 0.085), white (minimum > 0.58 with channel spread < 0.15) and yellow (R > 0.35, G > 0.30, B < 0.20). Otherwise the strongest RGB channel must represent > 55% of total signal; ambiguous outputs are marked unknown. These thresholds are declared design choices, not calibrated real LEGO color IDs.",
+            "The 270 trials achieved 97.04% correct classifications in the declared model. All individual errors remain in color_trials.csv and the full confusion matrix. A high classification score for these separated swatches does not establish the number of colors a real sensor can distinguish or its smallest intensity increment.",
+            "Resolution is evaluated from within-condition scatter and the reporting step. Color identification, reflectance resolution and light intensity are separate outputs. Larger standoff weakens the reflected signal; larger ambient illumination raises noise in this model. For a real test, include near-threshold shades, glossy surfaces and shadow changes, and replace assumed lux with a light-meter observation."
+          ],
+          "table": {
+            "headers": [
+              "Ambient (lux)",
+              "Standoff (mm)",
+              "Correct / trials",
+              "Accuracy (%)"
+            ],
+            "rows": [
+              [
+                "100",
+                "10",
+                "30/30",
+                "100.0"
+              ],
+              [
+                "100",
+                "20",
+                "30/30",
+                "100.0"
+              ],
+              [
+                "100",
+                "30",
+                "28/30",
+                "93.3"
+              ],
+              [
+                "300",
+                "10",
+                "30/30",
+                "100.0"
+              ],
+              [
+                "300",
+                "20",
+                "30/30",
+                "100.0"
+              ],
+              [
+                "300",
+                "30",
+                "30/30",
+                "100.0"
+              ],
+              [
+                "800",
+                "10",
+                "30/30",
+                "100.0"
+              ],
+              [
+                "800",
+                "20",
+                "28/30",
+                "93.3"
+              ],
+              [
+                "800",
+                "30",
+                "26/30",
+                "86.7"
+              ]
+            ]
+          },
+          "figure": "data/labs/figures/color_response.png",
+          "caption": "Normalized channels converge after the modeled physical white-to-red step; successful classification is a threshold event during that transition."
+        },
+        {
+          "heading": "7. Further sensor: single-axis rate gyroscope",
+          "paragraphs": [
+            "A rate gyroscope measures angular velocity about its sensitive axis. With a known starting orientation, numerical integration estimates the change of heading. It does not directly provide an absolute compass heading. The official FIRST implementation documentation for the legacy HiTechnic NXT gyro describes a single-axis rate output; this report uses its operating principle without assuming that such a sensor is physically present.",
+            "In a separate illustrative model, stationary rate bias is +0.8°/s with noise σ = 0.18°/s. Average 100 stationary samples before motion: estimated bias 0.8039°/s, s = 0.1737°/s. Sample at an assumed 100 Hz. A true 45°/s turn lasting 2 s gives 90°. Over the complete 5 s trace, uncorrected integration gives 94.080°; bias-corrected integration gives 90.061°.",
+            "Applications include turn-angle feedback, detecting unintended rotation, balancing control and comparing wheel odometry with body rotation. Remaining bias causes heading drift proportional to elapsed time; vibration, temperature changes and axis alignment require calibration. Combine rate with wheel encoders or a compass for longer-term orientation. Compass readings can be disturbed by local magnetic fields; an accelerometer measures specific force and cannot separate tilt from all vehicle accelerations without further assumptions."
+          ],
+          "calculations": [
+            "b̂ = (1/N)Σωstationary; ωcorrected = ωraw − b̂.",
+            "θk = θk−1 + ωcorrected,k Δt; units: (degrees/second) × seconds = degrees.",
+            "Residual bias 0.1°/s accumulates 6° heading error in 60 s. This is a dimensional example, not a measured drift specification."
+          ]
+        },
+        {
+          "heading": "8. Conclusions and files",
+          "paragraphs": [
+            "The models demonstrate a working test approach with separate truth, observation, calibration and error calculations. Sonar misses are explicit; angular detection is target dependent; fresh updates and physical response govern usable speed. Color calibration improves consistency, while raw intensity alone depends on illumination and geometry. The rate gyro example shows why stationary bias subtraction is essential before integration.",
+            "Reproduce with simulation/lab_simulations.py, seed 20261014. Sonar files: calibration, distance trials/summary, angular trials/summary and step response. Color files: trials/summary, confusion matrix, mode comparison and step response. Gyro files: stationary calibration and turn trace. All are CSVs under data/labs. No physical measurements, manufacturer precision or installed-device claims are implied."
+          ]
+        }
+      ],
+      "references": [
+        "Supplied Screenshot_3.png: Report_2 Exploring sonar and color sensor (4h).",
+        "Supplied __NXC_tutorial.pdf, p. 21: ultrasonic sensor example and low-speed configuration.",
+        "NXC official API, Input module functions: https://bricxcc.sourceforge.net/nbc/nxcdoc/nxcapi/group___input_module_functions.html",
+        "NXC official API, Color sensor array indices: https://bricxcc.sourceforge.net/nbc/nxcdoc/nxcapi/group___input_color_idx_constants.html",
+        "FIRST official legacy HiTechnic gyro implementation documentation: https://first-tech-challenge.github.io/SkyStone/com/qualcomm/hardware/hitechnic/HiTechnicNxtGyroSensor.html"
+      ]
+    }
+  ],
+  "results": {
+    "intro_best_heading_deg": 30,
+    "intro_best_score_cm": 214.33333333333334,
+    "intro_final_distance_mm": 678.0000000000024,
+    "intro_stop_time_s": 5.75,
+    "intro_scan_samples": 108,
+    "motor_trials": 60,
+    "motor_calibration_gain": 1.0031537336150889,
+    "motor_calibration_offset_deg": 0.7287966952582207,
+    "motor_mean_absolute_error_deg": 0.7833333333333333,
+    "motor_worst_mean_error_deg": -1.6000000000000227,
+    "sonar_distance_trials": 80,
+    "sonar_angular_trials": 340,
+    "sonar_first_change_delay_ms": 70,
+    "sonar_settling_delay_ms": 150,
+    "color_trials": 270,
+    "color_accuracy_pct": 97.03703703703704,
+    "color_classification_delay_ms": 70,
+    "gyro_corrected_heading_deg": 90.06084797656843,
+    "gyro_truth_heading_deg": 90.00000000000033
+  },
+  "checks": [
+    {
+      "check": "Motor test coverage",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Independent-angle observations exist",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Calibration recovers injected gain",
+      "passed": true,
+      "detail": "gain=1.0031537"
+    },
+    {
+      "check": "Negative command reverses direction",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Counter reset preserves physical shaft",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Wheel distance dimensional conversion",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Sonar missing echo excluded from statistics",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Sonar distance trials",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Sonar angular experiment count",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Cached reads do not count as fresh updates",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Read latency differs from physical response",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Color factorial coverage",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "RGB/blank channel logging",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Color confusion matrix total",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Color output responds after physical step",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Color normalization uses same-condition white reference",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Gyro integrated truth equals ninety degree turn",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Stationary bias calibration improves turn integral",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Scanner covers unique full-circle headings",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Scanner stores three observations per heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Best direction uses neighbor minimum",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Red stop finishes inside modeled red strip",
+      "passed": true,
+      "detail": "terminal=678.000 mm"
+    },
+    {
+      "check": "Terminal speed is zero",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Stop event has two confirmed red observations",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Scanner avoids obstacle contact",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: intro_scan_polar.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: intro_stop_trace.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: motor_error.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: sonar_accuracy.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: sonar_detection_sweep.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: sonar_step_response.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: color_light_distance.png",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Figure exists: color_response.png",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "assumptions": {
+    "wheel_diameter_mm": 56.0,
+    "track_mm": 120.0,
+    "all_sensor_noise_and_response_constants": "Educational assumptions, not manufacturer specifications"
+  }
+}

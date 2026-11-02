@@ -1,0 +1,27 @@
+/* Omar Zid | Companion NXT Bluetooth slave. Sender is master on connection1.
+   Pair/connect using NXT Bluetooth menu. Receiver connection0 is its master.
+   MAILBOX1 carries final sum; MAILBOX2 response carries acknowledgment. */
+#include "common_config.nxc"
+task main() {
+  long receivedSum;
+  char statusCode;
+  unsigned long startedMS;
+  if (!ArmRobot("BT RECEIVER")) { FinishDisplay(""); return; }
+  ClearScreen(); TextOut(0,LCD_LINE1,"OMAR ZID RECEIVER");
+  TextOut(0,LCD_LINE3,"Waiting for sum");
+  startedMS=CurrentTick();
+  while (!CheckAbort() && CurrentTick()-startedMS<120000) {
+    statusCode=ReceiveRemoteNumber(MAILBOX1,true,receivedSum);
+    if (statusCode==NO_ERR) {
+      ClearScreen(); TextOut(0,LCD_LINE1,"BARCODE SUM");
+      NumOut(36,LCD_LINE3,receivedSum);
+      /* Response mailbox supports master polling via ReceiveRemoteNumber. */
+      statusCode=SendResponseNumber(MAILBOX2,receivedSum);
+      if (statusCode==NO_ERR) TextOut(0,LCD_LINE5,"ACK QUEUED");
+      else TextOut(0,LCD_LINE5,"ACK ERROR");
+      startedMS=CurrentTick();
+    }
+    Wait(30);
+  }
+  FinishDisplay("RECEIVER STOPPED");
+}
