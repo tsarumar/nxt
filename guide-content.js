@@ -9,6 +9,7 @@ window.GUIDE_STEPS = [
     minutes: 20,
     timeBlock: '09:00–09:20',
     goal: 'Find the demonstration, the reports and your notes. You do not need to code today.',
+    exampleExplanation: 'This package shows robot tasks modeled on a computer. The browser replays saved results, and the reports explain the calculations and assumptions. Opening the demonstration does not connect to a real robot. The real-robot programs still need compilation, calibration and physical testing.',
     actions: [
       'Open the demonstration link below in a new tab. Keep this guide open so you can return and write notes.',
       'Check that the name Omar Zid and eight assignment tabs appear. Open the complete PDF too.',
@@ -38,6 +39,7 @@ window.GUIDE_STEPS = [
     minutes: 70,
     timeBlock: '09:20–10:30',
     goal: 'Study the introduction, then motors, then sensors. Learn what each part does before the projects.',
+    exampleExplanation: 'A motor turns a wheel, and the wheel size helps convert rotation into travel. With a 56 mm wheel and 450° rotation, the calculated travel is 219.91 mm if the wheel does not slip. Sonar estimates distance, while the color sensor reads light and color. In this simulation, readings include modeled errors, so a displayed number is not automatically an exact physical measurement.',
     actions: [
       'Spend about 15 minutes on Introduction scanner. Find the map, the chosen direction and the red stop. A scanner checks the space around the robot.',
       'Spend about 25 minutes on Report 1. A motor turns a shaft. A tacho count is the recorded rotation; resetting its zero does not physically move the shaft back.',
@@ -73,6 +75,7 @@ window.GUIDE_STEPS = [
     minutes: 40,
     timeBlock: '10:45–11:25',
     goal: 'Read the worked kinematics exercises. Kinematics means describing position and movement.',
+    exampleExplanation: 'A coordinate frame is a starting point and a set of directions for describing position. Translation moves that starting point, while rotation turns the directions. The same point can have different coordinates when described from different frames. The supplied drawing does not define frames B and D, so the report gives formulas for them instead of inventing numbers.',
     actions: [
       'Open the kinematics report. Start with the numbered point exercises before the larger coordinate-frame drawing.',
       'A coordinate frame is a starting point and a set of directions used to describe a position. A translation moves the starting point; a rotation turns the directions.',
@@ -101,6 +104,7 @@ window.GUIDE_STEPS = [
     minutes: 45,
     timeBlock: '11:25–12:10',
     goal: 'See how the robot pushes objects outside the ring, then checks whether any remain.',
+    exampleExplanation: 'In this simulation, the robot searches the ring, approaches an object and pushes it outside. It returns and searches again instead of assuming one push finished the task. The saved nominal run expels 9 out of 9 objects, then completes an empty-ring check. The robot dimensions and boundary assumptions matter because clearing the objects must also keep the robot inside.',
     actions: [
       'Open Project 1 and click Play. The default replay rate is faster than real time; the displayed elapsed time still comes from the saved simulation.',
       'Try Pause, Restart and the timeline slider. Then move the slider to the end or let the replay finish.',
@@ -130,6 +134,7 @@ window.GUIDE_STEPS = [
     minutes: 50,
     timeBlock: '12:50–13:40',
     goal: 'Count the bars and see why moving too fast can miss them.',
+    exampleExplanation: 'The scanner counts a bar when its reading changes from white to dark. It uses separate dark and light thresholds and waits for repeated readings so small fluctuations do not create extra counts. In this simulation, 60 mm/s gives 14 out of 14 bars in the interactive test. At 300 mm/s it gives 3 out of 14 because narrow bars pass too quickly for confirmation.',
     actions: [
       'Open Project 2, click Play and check the final bar count.',
       'Find Try a scanning speed below the replay. Set it to 60 mm/s, then 150 mm/s, then 300 mm/s. Write the count shown at each setting.',
@@ -160,6 +165,7 @@ window.GUIDE_STEPS = [
     minutes: 75,
     timeBlock: '13:40–14:55',
     goal: 'Check obstacle avoidance, then the line follower. Give each project its own short explanation.',
+    exampleExplanation: 'In this simulation, obstacle avoidance ends 1600 mm forward on the original line, but detours make its total route longer. The line follower keeps correcting steering and completes a circuit in 20.88 s. P responds to the current error, I adds up persistent error, and D responds to how quickly the error changes. These computer results do not prove that the physical robot has completed either task.',
     actions: [
       'Spend about 35 minutes on Project 3. Play the route around the two obstacles. At the end, compare Forward progress and Line deviation with the expected values.',
       'In its report, notice that 1600 mm is forward progress. The total route is longer because the robot goes around obstacles.',
@@ -194,6 +200,7 @@ window.GUIDE_STEPS = [
     minutes: 60,
     timeBlock: '15:10–16:10',
     goal: 'Run a short demonstration, write what you checked and decide what is still needed.',
+    exampleExplanation: 'This is my robotics simulation package, with reports, calculations and saved demonstrations. The expected project results are 9 out of 9 objects, 14 out of 14 bars, a 1600 mm navigation endpoint, and a PID circuit in 20.88 seconds. I can use the replay and report to explain how each result was calculated. Physical robot testing is a separate stage, and these results should be described as simulated.',
     actions: [
       'Close extra tabs. Open the demonstration and complete PDF again as if the teacher has just arrived.',
       'For each project, say what it should do, show the replay, read its final result and point to one report calculation with units.',

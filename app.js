@@ -65,6 +65,7 @@
     $('step-links').innerHTML=s.links.map(l=>`<a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)} <span aria-hidden="true">↗</span></a>`).join('');
     $('step-checks').innerHTML=s.checks.map(c=>checkMarkup(c,'check')).join('');
     $('explain-fields').innerHTML=s.explainPrompts.map((prompt,i)=>{const key=s.id+':'+i;return `<label class="answer-field"><span>${esc(prompt)}</span><textarea rows="2" data-answer="${esc(key)}" placeholder="My explanation…">${esc(state.answers[key]||'')}</textarea></label>`}).join('');
+    $('explain-example').hidden=!s.exampleExplanation;$('explain-example').open=false;$('example-text').textContent=s.exampleExplanation||'';
     $('note-prompts').innerHTML=s.notePrompts.map(p=>'<li>'+esc(p)+'</li>').join('');
     $('step-notes').value=state.notes[s.id]||'';
     $('readiness').hidden=!s.readinessItems;
