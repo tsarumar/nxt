@@ -1,7 +1,7 @@
 // Project 1 - Clean the Ring
 // Robot starts in the MIDDLE of the ring.
 // Loop:
-//   1. turn slowly and look with the sonar for an object inside the ring
+//   1. spin on the spot and look with the sonar for an object inside the ring
 //   2. aim at the middle of the object
 //   3. drive forward and push it until the color sensor sees the white ring border
 //   4. drive back the same distance to the middle, remember where the object was
@@ -12,7 +12,8 @@
 
 #define RING_CM    55    // objects farther than this are outside the ring
 #define EDGE       INPUT_WHITECOLOR   // colour of the ring border (our ring: black inside, white border)
-#define PUSH_POWER 60
+#define PUSH_POWER 75
+#define SPIN_POWER 35    // how fast it spins while looking (faster = quicker, but may miss thin objects)
 #define EXTRA_CM   4     // push a little more after the edge, so the object falls out
 #define MAX_CM     90    // safety: never drive more than this in one push
 
@@ -25,6 +26,30 @@ int See()
 {
   Wait(60);
   return SensorUS(SONAR);
+}
+
+// Spin right without stopping. Returns how many degrees the ROBOT turned.
+// mode 1: stop as soon as something is closer than RING_CM (or after maxAngle)
+// mode 2: stop as soon as it is NOT seen anymore (or after maxAngle)
+int SpinUntil(int mode, int maxAngle)
+{
+  long spinStart = MotorRotationCount(LEFT);
+  long limit = maxAngle * TURN_FACTOR;
+  long spun = 0;
+  int d;
+  OnFwdSync(BOTH, SPIN_POWER * DIR, 100);   // both wheels opposite = spin on the spot
+  while (spun < limit) {
+    d = SensorUS(SONAR);
+    if (mode == 1 && d < RING_CM) break;
+    if (mode == 2 && d >= RING_CM) break;
+    spun = MotorRotationCount(LEFT) - spinStart;
+    if (spun < 0) spun = -spun;
+    Wait(10);
+  }
+  Off(BOTH);
+  spun = MotorRotationCount(LEFT) - spinStart;
+  if (spun < 0) spun = -spun;
+  return spun / TURN_FACTOR;
 }
 
 void DrawMap()
@@ -63,23 +88,14 @@ task main()
   t0 = CurrentTick();
 
   while (pushed < 20) {
-    // 1. search
-    found = false;
-    turned = 0;
-    while (turned < 360 && !found) {
-      TurnRight(10);
-      turned += 10;
-      heading = (heading + 10) % 360;
-      if (See() < RING_CM) found = true;
-    }
-    if (!found) break;                       // nothing left -> clean
+    // 1. search: spin smoothly and look all the time
+    turned = SpinUntil(1, 370);
+    heading = (heading + turned) % 360;
+    if (turned >= 360) break;                // full circle, nothing seen -> clean
 
-    // 2. aim at the middle of the object: keep turning until we lose it
-    aimTurn = 0;
-    while (aimTurn < 60 && See() < RING_CM) {
-      TurnRight(5);
-      aimTurn += 5;
-    }
+    // 2. aim at the middle of the object: keep spinning until we lose it,
+    //    then turn back half of that
+    aimTurn = SpinUntil(2, 60);
     TurnLeft(aimTurn / 2);
     heading = (heading + aimTurn / 2) % 360;
 
