@@ -55,8 +55,8 @@ task main()
     turn = SIDE * (KP * error + KI * integral + KD * derivative) / 100;
     pL = TP + turn;
     pR = TP - turn;
-    OnFwd(LEFT, pL);                         // negative power = backwards
-    OnFwd(RIGHT, pR);
+    OnFwd(LEFT, pL * DIR);                         // negative power = backwards
+    OnFwd(RIGHT, pR * DIR);
     lastError = error;
 
     n++;
@@ -65,7 +65,7 @@ task main()
       WriteLnString(fh, txt, cnt);
     }
 
-    dist = DegToCm((MotorRotationCount(LEFT) + MotorRotationCount(RIGHT)) / 2);
+    dist = DegToCm((MotorRotationCount(LEFT) + MotorRotationCount(RIGHT)) / 2 * DIR);
     if (LAP_CM > 0 && dist >= LAP_CM) break;
     if (ButtonPressed(BTNCENTER, false)) break;
   }

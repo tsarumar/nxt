@@ -86,9 +86,9 @@ task main()
     // 3. push until the edge
     dist = See();
     startDeg = MotorRotationCount(LEFT);
-    OnFwdReg(BOTH, PUSH_POWER, OUT_REGMODE_SYNC);
+    Forward(PUSH_POWER);
     until(Sensor(COLOR) == EDGE ||
-          MotorRotationCount(LEFT) - startDeg > CmToDeg(MAX_CM));
+          Travel(startDeg) > CmToDeg(MAX_CM));
     Off(BOTH);
     Move(EXTRA_CM);
     driven = MotorRotationCount(LEFT) - startDeg;

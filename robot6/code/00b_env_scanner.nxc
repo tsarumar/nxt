@@ -55,7 +55,7 @@ task main()
 
   // 4: turn to the best direction (robot is back at 0 deg after 360)
   TurnRight(best * STEP_ANGLE);
-  OnFwdReg(BOTH, 40, OUT_REGMODE_SYNC);
+  Forward(40);
 
   // 5: drive until red spot (or something is too close, for safety)
   until(Sensor(COLOR) == INPUT_REDCOLOR || SensorUS(SONAR) < 15);

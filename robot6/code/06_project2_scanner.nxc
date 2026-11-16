@@ -50,11 +50,11 @@ task main()
   ResetRotationCount(LEFT);
   lastBarEnd = 0;
   t0 = CurrentTick();
-  OnFwdReg(BOTH, SCAN_POWER, OUT_REGMODE_SYNC);
+  Forward(SCAN_POWER);
 
   while (true) {
     v = Sensor(COLOR);
-    pos = MotorRotationCount(LEFT);
+    pos = MotorRotationCount(LEFT) * DIR;
     if (!onBar && v < thr - 3) {             // white -> dark: new bar
       onBar = true;
       if (bars == 0 || DegToCm(pos - lastBarEnd) > GROUP_GAP) {

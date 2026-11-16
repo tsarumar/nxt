@@ -86,12 +86,12 @@ task main()
 
   while (forward < N) {
     startDeg = MotorRotationCount(LEFT);
-    OnFwdReg(BOTH, 45, OUT_REGMODE_SYNC);
+    Forward(45);
     until(SensorUS(SONAR) < SAFE_CM ||
-          forward + DegToCm(MotorRotationCount(LEFT) - startDeg) >= N);
+          forward + DegToCm(Travel(startDeg)) >= N);
     Off(BOTH);
     Wait(100);
-    forward += DegToCm(MotorRotationCount(LEFT) - startDeg);
+    forward += DegToCm(Travel(startDeg));
     if (forward < N) {
       obstacles++;
       PlayTone(660, 100);

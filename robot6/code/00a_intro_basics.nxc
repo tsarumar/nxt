@@ -48,13 +48,13 @@ task drive()
       Acquire(screen);
       TextOut(0, LCD_LINE6, "Forward ");
       Release(screen);
-      RotateMotorEx(BOTH, 50, 360, 0, true, true);
+      RotateMotorEx(BOTH, 50, 360 * DIR, 0, true, true);
     }
     if (ButtonPressed(BTNLEFT, false)) {
       Acquire(screen);
       TextOut(0, LCD_LINE6, "Back    ");
       Release(screen);
-      RotateMotorEx(BOTH, 50, -360, 0, true, true);
+      RotateMotorEx(BOTH, 50, -360 * DIR, 0, true, true);
     }
     Acquire(screen);
     TextOut(0, LCD_LINE7, "B count:      ");
