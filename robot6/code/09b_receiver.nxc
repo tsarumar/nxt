@@ -1,0 +1,19 @@
+// Project 2 - program for the SECOND robot (receiver).
+// Waits for a number in mailbox 1 and shows it.
+
+task main()
+{
+  int n;
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "RECEIVER");
+  TextOut(0, LCD_LINE3, "waiting...");
+  while (true) {
+    if (ReceiveRemoteNumber(MAILBOX1, true, n) == NO_ERR) {
+      ClearScreen();
+      TextOut(0, LCD_LINE1, "RECEIVED BARS:");
+      NumOut(0, LCD_LINE3, n);
+      PlayTone(880, 300);
+    }
+    Wait(100);
+  }
+}
