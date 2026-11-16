@@ -3,7 +3,7 @@
 // Loop:
 //   1. turn slowly and look with the sonar for an object inside the ring
 //   2. aim at the middle of the object
-//   3. drive forward and push it until the color sensor sees the ring edge
+//   3. drive forward and push it until the color sensor sees the white ring border
 //   4. drive back the same distance to the middle, remember where the object was
 // If a full 360 degree turn finds nothing -> ring is clean -> STOP
 // and show a map of the pushed out objects on the screen (also saved in ring.txt).
@@ -11,7 +11,7 @@
 #include "robot_config.h"
 
 #define RING_CM    55    // objects farther than this are outside the ring
-#define EDGE       INPUT_BLACKCOLOR   // colour of the ring border
+#define EDGE       INPUT_WHITECOLOR   // colour of the ring border (our ring: black inside, white border)
 #define PUSH_POWER 60
 #define EXTRA_CM   4     // push a little more after the edge, so the object falls out
 #define MAX_CM     90    // safety: never drive more than this in one push
