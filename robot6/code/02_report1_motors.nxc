@@ -1,0 +1,72 @@
+// Report 1 - Exploring motors.   LIFT THE ROBOT so the wheels turn freely!
+// Part 1 (automatic): for 4 speeds and 8 target angles, RotateMotor() is called
+//   and we read how far the shaft really turned. Saved to motors.txt as:
+//   power;target;real;error;time_ms
+// Part 2 (by hand): live screen of the counters. Turn the LEFT wheel by hand.
+//   LEFT button = ResetTachoCount, RIGHT button = ResetRotationCount,
+//   ENTER = ResetBlockTachoCount.  See which number goes back to 0.
+
+#include "robot_config.h"
+#define M LEFT                          // the motor we test
+
+int powers[]  = {25, 50, 75, 100};
+int targets[] = {45, 90, 180, 360, 450, 650, -45, -360};
+
+task main()
+{
+  byte fh;
+  unsigned int cnt;
+  int p, t;
+  long before, tStart, ms, real, error;
+  string s;
+
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "REPORT 1 MOTORS");
+  TextOut(0, LCD_LINE3, "Lift the robot!");
+  TextOut(0, LCD_LINE5, "ENTER = start");
+  WaitEnter();
+
+  DeleteFile("motors.txt");
+  CreateFile("motors.txt", 2048, fh);
+  WriteLnString(fh, "power;target;real;error;time_ms", cnt);
+
+  for (p = 0; p < 4; p++) {
+    for (t = 0; t < 8; t++) {
+      before = MotorRotationCount(M);
+      tStart  = CurrentTick();
+      RotateMotor(M, powers[p], targets[t]);
+      ms = CurrentTick() - tStart;
+      Wait(300);                                  // let it fully stop
+      real  = MotorRotationCount(M) - before;
+      error = real - targets[t];
+
+      ClearScreen();
+      TextOut(0, LCD_LINE1, "power:");   NumOut(50, LCD_LINE1, powers[p]);
+      TextOut(0, LCD_LINE2, "target:");  NumOut(50, LCD_LINE2, targets[t]);
+      TextOut(0, LCD_LINE3, "real:");    NumOut(50, LCD_LINE3, real);
+      TextOut(0, LCD_LINE4, "error:");   NumOut(50, LCD_LINE4, error);
+      TextOut(0, LCD_LINE5, "time ms:"); NumOut(50, LCD_LINE5, ms);
+
+      s = NumToStr(powers[p]) + ";" + NumToStr(targets[t]) + ";" +
+          NumToStr(real) + ";" + NumToStr(error) + ";" + NumToStr(ms);
+      WriteLnString(fh, s, cnt);
+      Wait(700);
+    }
+  }
+  CloseFile(fh);
+
+  // Part 2: live counters
+  Float(M);                            // motor free, can be turned by hand
+  while (true) {
+    ClearScreen();
+    TextOut(0, LCD_LINE1, "Turn wheel by hand");
+    TextOut(0, LCD_LINE3, "Tacho:");    NumOut(55, LCD_LINE3, MotorTachoCount(M));
+    TextOut(0, LCD_LINE4, "Rotation:"); NumOut(55, LCD_LINE4, MotorRotationCount(M));
+    TextOut(0, LCD_LINE5, "Block:");    NumOut(55, LCD_LINE5, MotorBlockTachoCount(M));
+    TextOut(0, LCD_LINE7, "L/R/ENTER reset");
+    if (ButtonPressed(BTNLEFT, false))   ResetTachoCount(M);
+    if (ButtonPressed(BTNRIGHT, false))  ResetRotationCount(M);
+    if (ButtonPressed(BTNCENTER, false)) ResetBlockTachoCount(M);
+    Wait(100);
+  }
+}

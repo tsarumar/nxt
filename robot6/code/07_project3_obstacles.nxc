@@ -1,0 +1,118 @@
+// Project 3 - Obstacle Avoidance
+// Robot drives N cm straight (N set with the LEFT/RIGHT buttons).
+// If an obstacle is in front:
+//   1. turn left, move sideways step by step; after each step turn right
+//      and look - when the way forward is free, the robot is past the side
+//   2. drive forward next to the obstacle; after each step turn right and
+//      look - when nothing is there anymore, the robot is past the obstacle
+//   3. go back sideways the same distance -> robot is on the line again
+// Only forward moves count towards N, so the robot ends N cm from the start.
+
+#include "robot_config.h"
+
+#define SAFE_CM   20    // obstacle closer than this -> go around
+#define STEP_CM   5     // step size while going around
+#define BODY_CM   12    // extra so the whole robot body gets past
+#define FREE_CM   35    // farther than this = free
+
+float forward = 0;      // cm done along the line
+float maxSide = 0;
+int N = 100;            // cm, changeable
+
+void Avoid()
+{
+  float side = 0;
+  int d;
+
+  // 1. sideways until free
+  TurnLeft(90);
+  do {
+    Move(STEP_CM);
+    side += STEP_CM;
+    TurnRight(90);
+    Wait(100);
+    d = SensorUS(SONAR);
+    TurnLeft(90);
+  } while (d < FREE_CM && side < 80);
+  Move(BODY_CM);
+  side += BODY_CM;
+  TurnRight(90);                    // facing forward again
+
+  // 2. forward until we are past the obstacle
+  do {
+    Move(STEP_CM);
+    forward += STEP_CM;
+    TurnRight(90);
+    Wait(100);
+    d = SensorUS(SONAR);
+    TurnLeft(90);
+  } while (d < side + 10 && forward < N);
+  Move(BODY_CM);
+  forward += BODY_CM;
+
+  // 3. back to the line
+  TurnRight(90);
+  Move(side);
+  TurnLeft(90);
+  if (side > maxSide) maxSide = side;
+}
+
+string txt;
+
+task main()
+{
+  long t0, startDeg;
+  int obstacles = 0;
+  byte fh;
+  unsigned int cnt;
+
+  SetSensorLowspeed(SONAR);
+
+  // choose N
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "OBSTACLES");
+  TextOut(0, LCD_LINE3, "N cm (L/R):");
+  TextOut(0, LCD_LINE6, "ENTER = start");
+  while (!ButtonPressed(BTNCENTER, false)) {
+    if (ButtonPressed(BTNRIGHT, false)) { N += 10; Wait(250); }
+    if (ButtonPressed(BTNLEFT, false) && N > 10) { N -= 10; Wait(250); }
+    TextOut(0, LCD_LINE4, "        ");
+    NumOut(0, LCD_LINE4, N);
+    Wait(50);
+  }
+  until(!ButtonPressed(BTNCENTER, false));
+  Wait(500);
+  t0 = CurrentTick();
+
+  while (forward < N) {
+    startDeg = MotorRotationCount(LEFT);
+    OnFwdReg(BOTH, 45, OUT_REGMODE_SYNC);
+    until(SensorUS(SONAR) < SAFE_CM ||
+          forward + DegToCm(MotorRotationCount(LEFT) - startDeg) >= N);
+    Off(BOTH);
+    Wait(100);
+    forward += DegToCm(MotorRotationCount(LEFT) - startDeg);
+    if (forward < N) {
+      obstacles++;
+      PlayTone(660, 100);
+      Avoid();
+    }
+  }
+  Off(BOTH);
+  t0 = CurrentTick() - t0;
+
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "DONE");
+  TextOut(0, LCD_LINE2, "N cm:");       NumOut(60, LCD_LINE2, N);
+  TextOut(0, LCD_LINE3, "forward:");    NumOut(60, LCD_LINE3, forward);
+  TextOut(0, LCD_LINE4, "obstacles:");  NumOut(60, LCD_LINE4, obstacles);
+  TextOut(0, LCD_LINE5, "max side:");   NumOut(60, LCD_LINE5, maxSide);
+  TextOut(0, LCD_LINE6, "sec:");        NumOut(60, LCD_LINE6, t0 / 1000);
+
+  DeleteFile("obst.txt");
+  CreateFile("obst.txt", 512, fh);
+  txt = "N=" + NumToStr(N) + " forward=" + NumToStr(forward) + " obstacles=" + NumToStr(obstacles) + " maxside=" + NumToStr(maxSide) + " time_s=" + NumToStr(t0 / 1000);
+  WriteLnString(fh, txt, cnt);
+  CloseFile(fh);
+  until(ButtonPressed(BTNCENTER, false));
+}

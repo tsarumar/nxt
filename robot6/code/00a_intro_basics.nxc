@@ -1,0 +1,74 @@
+// Introduction - basics:
+//  - movement + measurement + buttons (I/O)
+//  - two tasks running in parallel
+//  - a mutex so both tasks don't use the screen/motors at the same time
+//  - readings saved into a file (intro.txt)
+//
+// LEFT/RIGHT button = robot moves back/forward one wheel turn
+// The other task shows the sonar + color sensor all the time and logs them.
+
+#include "robot_config.h"
+
+mutex screen;     // only one task may write on the screen at a time
+
+task sensors()
+{
+  byte fh;
+  unsigned int cnt;
+  int n = 0;
+  DeleteFile("intro.txt");
+  CreateFile("intro.txt", 2048, fh);
+
+  while (true) {
+    int d = SensorUS(SONAR);
+    int c = Sensor(COLOR);
+
+    Acquire(screen);
+    TextOut(0, LCD_LINE3, "Dist:        ");
+    NumOut(40, LCD_LINE3, d);
+    TextOut(0, LCD_LINE4, "Color:       ");
+    NumOut(40, LCD_LINE4, c);
+    Release(screen);
+
+    // save one line every 0.5 s, max 60 lines
+    if (n < 60) {
+      string s = NumToStr(CurrentTick()) + " ms; dist=" + NumToStr(d) + "; color=" + NumToStr(c);
+      WriteLnString(fh, s, cnt);
+      n++;
+      if (n == 60) CloseFile(fh);
+    }
+    Wait(500);
+  }
+}
+
+task drive()
+{
+  while (true) {
+    if (ButtonPressed(BTNRIGHT, false)) {
+      Acquire(screen);
+      TextOut(0, LCD_LINE6, "Forward ");
+      Release(screen);
+      RotateMotorEx(BOTH, 50, 360, 0, true, true);
+    }
+    if (ButtonPressed(BTNLEFT, false)) {
+      Acquire(screen);
+      TextOut(0, LCD_LINE6, "Back    ");
+      Release(screen);
+      RotateMotorEx(BOTH, 50, -360, 0, true, true);
+    }
+    Acquire(screen);
+    TextOut(0, LCD_LINE7, "B count:      ");
+    NumOut(55, LCD_LINE7, MotorRotationCount(LEFT));
+    Release(screen);
+    Wait(50);
+  }
+}
+
+task main()
+{
+  SetSensorLowspeed(SONAR);
+  SetSensorColorFull(COLOR);
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "INTRO BASICS");
+  Precedes(sensors, drive);   // start both tasks in parallel
+}

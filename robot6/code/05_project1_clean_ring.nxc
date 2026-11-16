@@ -1,0 +1,126 @@
+// Project 1 - Clean the Ring
+// Robot starts in the MIDDLE of the ring.
+// Loop:
+//   1. turn slowly and look with the sonar for an object inside the ring
+//   2. aim at the middle of the object
+//   3. drive forward and push it until the color sensor sees the ring edge
+//   4. drive back the same distance to the middle, remember where the object was
+// If a full 360 degree turn finds nothing -> ring is clean -> STOP
+// and show a map of the pushed out objects on the screen (also saved in ring.txt).
+
+#include "robot_config.h"
+
+#define RING_CM    55    // objects farther than this are outside the ring
+#define EDGE       INPUT_BLACKCOLOR   // colour of the ring border
+#define PUSH_POWER 60
+#define EXTRA_CM   4     // push a little more after the edge, so the object falls out
+#define MAX_CM     90    // safety: never drive more than this in one push
+
+int heading = 0;         // where the robot looks now (degrees, 0 = start)
+int objAngle[20];
+int objDist[20];
+int pushed = 0;
+
+int See()
+{
+  Wait(60);
+  return SensorUS(SONAR);
+}
+
+void DrawMap()
+{
+  int i, x, y, a;
+  ClearScreen();
+  CircleOut(32, 32, 25);                     // the ring
+  CircleOut(32, 32, 1);                      // robot in the middle
+  for (i = 0; i < pushed; i++) {
+    a = objAngle[i];
+    x = 32 + 30 * Sin(a) / 100;               // just outside the ring
+    y = 32 + 30 * Cos(a) / 100;
+    CircleOut(x, y, 2);
+  }
+  TextOut(66, LCD_LINE1, "Pushed");
+  NumOut(66, LCD_LINE2, pushed);
+}
+
+string txt;
+
+task main()
+{
+  byte fh;
+  unsigned int cnt;
+  int turned, aimTurn, dist, d, i;
+  long t0, startDeg, driven;
+  bool found;
+
+  SetSensorLowspeed(SONAR);
+  SetSensorColorFull(COLOR);
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "CLEAN THE RING");
+  TextOut(0, LCD_LINE3, "Put me in the");
+  TextOut(0, LCD_LINE4, "middle, ENTER");
+  WaitEnter();
+  t0 = CurrentTick();
+
+  while (pushed < 20) {
+    // 1. search
+    found = false;
+    turned = 0;
+    while (turned < 360 && !found) {
+      TurnRight(10);
+      turned += 10;
+      heading = (heading + 10) % 360;
+      if (See() < RING_CM) found = true;
+    }
+    if (!found) break;                       // nothing left -> clean
+
+    // 2. aim at the middle of the object: keep turning until we lose it
+    aimTurn = 0;
+    while (aimTurn < 60 && See() < RING_CM) {
+      TurnRight(5);
+      aimTurn += 5;
+    }
+    TurnLeft(aimTurn / 2);
+    heading = (heading + aimTurn / 2) % 360;
+
+    // 3. push until the edge
+    dist = See();
+    startDeg = MotorRotationCount(LEFT);
+    OnFwdReg(BOTH, PUSH_POWER, OUT_REGMODE_SYNC);
+    until(Sensor(COLOR) == EDGE ||
+          MotorRotationCount(LEFT) - startDeg > CmToDeg(MAX_CM));
+    Off(BOTH);
+    Move(EXTRA_CM);
+    driven = MotorRotationCount(LEFT) - startDeg;
+
+    // remember it
+    objAngle[pushed] = heading;
+    objDist[pushed] = dist;
+    pushed++;
+    PlayTone(880, 100);
+
+    // 4. back to the middle
+    RotateMotorEx(BOTH, PUSH_POWER, -driven, 0, true, true);
+  }
+
+  // finished
+  Off(BOTH);
+  t0 = CurrentTick() - t0;
+  PlayTone(1200, 500);
+  DrawMap();
+  TextOut(66, LCD_LINE4, "CLEAN");
+  TextOut(66, LCD_LINE6, "sec:");
+  NumOut(66, LCD_LINE7, t0 / 1000);
+
+  DeleteFile("ring.txt");
+  CreateFile("ring.txt", 1024, fh);
+  txt = "time_s=" + NumToStr(t0 / 1000) + " pushed=" + NumToStr(pushed);
+  WriteLnString(fh, txt, cnt);
+  for (i = 0; i < pushed; i++) {
+    txt = "object " + NumToStr(i + 1) + ": angle " + NumToStr(objAngle[i]) + " deg, seen at " + NumToStr(objDist[i]) + " cm";
+    WriteLnString(fh, txt, cnt);
+  }
+  CloseFile(fh);
+
+  until(ButtonPressed(BTNCENTER, false));   // keep the map on screen
+}

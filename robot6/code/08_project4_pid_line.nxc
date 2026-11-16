@@ -1,0 +1,83 @@
+// Project 4 - Line follower with ONE color sensor and PID
+// The sensor follows the EDGE of a black line (half on black, half on white).
+//   error = light - middle value
+//   turn  = Kp*error + Ki*integral + Kd*(error - lastError)
+//   left motor = Tp + turn,  right motor = Tp - turn
+// Numbers are x100 (Kp = 300 means 3.00) so we only use whole numbers.
+//
+// ONE ROUND: first run with LAP_CM 0 -> stop it with ENTER after one round,
+// the screen shows the distance. Put that number into LAP_CM.
+
+#include "robot_config.h"
+
+#define KP   300      // 3.00   start with only Kp, then add Kd, then Ki
+#define KI   5        // 0.05
+#define KD   1000     // 10.00
+#define TP   35       // base power
+#define SIDE 1        // if the robot turns away from the line, change to -1
+#define LAP_CM 0      // length of one round in cm (0 = stop with ENTER)
+
+string txt;
+
+task main()
+{
+  int white, black, offset, light, error, lastError = 0, turn, pL, pR, n = 0;
+  long integral = 0, derivative, t0, ms;
+  float dist;
+  byte fh;
+  unsigned int cnt;
+
+  SetSensorColorRed(COLOR);
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "PID LINE");
+  TextOut(0, LCD_LINE3, "Sensor on WHITE");
+  WaitEnter();
+  white = Sensor(COLOR);
+  TextOut(0, LCD_LINE3, "Sensor on BLACK");
+  WaitEnter();
+  black = Sensor(COLOR);
+  offset = (white + black) / 2;
+  TextOut(0, LCD_LINE3, "On the edge,   ");
+  TextOut(0, LCD_LINE4, "ENTER = go");
+  WaitEnter();
+
+  DeleteFile("line.txt");
+  CreateFile("line.txt", 8000, fh);
+  WriteLnString(fh, "time_ms;error;turn", cnt);
+
+  ResetRotationCount(BOTH);
+  t0 = CurrentTick();
+  while (true) {
+    light = Sensor(COLOR);
+    error = light - offset;
+    integral = integral * 2 / 3 + error;     // old errors slowly forgotten
+    derivative = error - lastError;
+    turn = SIDE * (KP * error + KI * integral + KD * derivative) / 100;
+    pL = TP + turn;
+    pR = TP - turn;
+    OnFwd(LEFT, pL);                         // negative power = backwards
+    OnFwd(RIGHT, pR);
+    lastError = error;
+
+    n++;
+    if (n % 5 == 0 && n < 2000) {            // log every 5th loop
+      txt = NumToStr(CurrentTick() - t0) + ";" + NumToStr(error) + ";" + NumToStr(turn);
+      WriteLnString(fh, txt, cnt);
+    }
+
+    dist = DegToCm((MotorRotationCount(LEFT) + MotorRotationCount(RIGHT)) / 2);
+    if (LAP_CM > 0 && dist >= LAP_CM) break;
+    if (ButtonPressed(BTNCENTER, false)) break;
+  }
+  Off(BOTH);
+  ms = CurrentTick() - t0;
+  CloseFile(fh);
+
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "ROUND DONE");
+  TextOut(0, LCD_LINE3, "time ms:");  NumOut(55, LCD_LINE3, ms);
+  TextOut(0, LCD_LINE4, "dist cm:");  NumOut(55, LCD_LINE4, dist);
+  TextOut(0, LCD_LINE5, "w/b:");      NumOut(30, LCD_LINE5, white); NumOut(60, LCD_LINE5, black);
+  Wait(1000);
+  until(ButtonPressed(BTNCENTER, false));
+}

@@ -1,0 +1,42 @@
+// Port check - run this first.
+// Shows what every sensor port reads, then spins motor A, B, C one by one.
+// Ultrasonic port: a number in cm that changes when you move your hand.
+// Color port: a number 1..6 (1 black, 2 blue, 3 green, 4 yellow, 5 red, 6 white).
+
+task main()
+{
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "PORT CHECK");
+  // try every port as ultrasonic first
+  SetSensorLowspeed(IN_1); SetSensorLowspeed(IN_2);
+  SetSensorLowspeed(IN_3); SetSensorLowspeed(IN_4);
+  Wait(500);
+  TextOut(0, LCD_LINE2, "US 1..4:");
+  NumOut(0,  LCD_LINE3, SensorUS(IN_1));
+  NumOut(25, LCD_LINE3, SensorUS(IN_2));
+  NumOut(50, LCD_LINE3, SensorUS(IN_3));
+  NumOut(75, LCD_LINE3, SensorUS(IN_4));
+  // then as color sensor
+  SetSensorColorFull(IN_1); SetSensorColorFull(IN_2);
+  SetSensorColorFull(IN_3); SetSensorColorFull(IN_4);
+  Wait(500);
+  TextOut(0, LCD_LINE4, "Color 1..4:");
+  NumOut(0,  LCD_LINE5, Sensor(IN_1));
+  NumOut(25, LCD_LINE5, Sensor(IN_2));
+  NumOut(50, LCD_LINE5, Sensor(IN_3));
+  NumOut(75, LCD_LINE5, Sensor(IN_4));
+  TextOut(0, LCD_LINE7, "ENTER: motors");
+  until(ButtonPressed(BTNCENTER, false));
+  Wait(500);
+
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "Motor A turns");
+  RotateMotor(OUT_A, 40, 360);
+  TextOut(0, LCD_LINE1, "Motor B turns");
+  RotateMotor(OUT_B, 40, 360);
+  TextOut(0, LCD_LINE1, "Motor C turns");
+  RotateMotor(OUT_C, 40, 360);
+  TextOut(0, LCD_LINE3, "Which wheel moved");
+  TextOut(0, LCD_LINE4, "for each letter?");
+  Wait(5000);
+}

@@ -1,0 +1,100 @@
+// Project 2 - SCANNER (bar counter)
+// The robot drives slowly over the card, the color sensor (light mode, red lamp)
+// looks down. Bar = dark, background = white.
+//  - a bar is counted when the light goes from white to dark
+//  - a big white gap between bars = a new group starts
+// At the end: number of bars + working time on the screen,
+// the result is ADDED to Scaner.txt, and the sum is sent to the other robot
+// by Bluetooth (connect the 2 robots first, this robot = master, line 1).
+
+#include "robot_config.h"
+
+#define SCAN_POWER  25    // slower = more accurate, faster = less time
+#define GROUP_GAP   2.0   // cm of white between bars that means "new group"
+#define END_GAP     6.0   // cm of white after the last bar = end of card
+#define BT_LINE     1     // Bluetooth connection number of the other robot
+
+int groupBars[10];
+
+string txt;
+
+task main()
+{
+  int white, black, thr, v, bars = 0, groups = 0, i;
+  bool onBar = false;
+  long t0, ms, lastBarEnd, pos;
+  byte fh;
+  unsigned int cnt, size;
+  string s;
+
+  SetSensorColorRed(COLOR);
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "SCANNER");
+  TextOut(0, LCD_LINE3, "Sensor on WHITE");
+  TextOut(0, LCD_LINE4, "ENTER");
+  WaitEnter();
+  white = Sensor(COLOR);
+  TextOut(0, LCD_LINE3, "Sensor on a BAR");
+  WaitEnter();
+  black = Sensor(COLOR);
+  thr = (white + black) / 2;               // middle between white and black
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "white/black/thr");
+  NumOut(0, LCD_LINE2, white);
+  NumOut(30, LCD_LINE2, black);
+  NumOut(60, LCD_LINE2, thr);
+  TextOut(0, LCD_LINE4, "Put at start");
+  TextOut(0, LCD_LINE5, "ENTER = go");
+  WaitEnter();
+
+  ResetRotationCount(LEFT);
+  lastBarEnd = 0;
+  t0 = CurrentTick();
+  OnFwdReg(BOTH, SCAN_POWER, OUT_REGMODE_SYNC);
+
+  while (true) {
+    v = Sensor(COLOR);
+    pos = MotorRotationCount(LEFT);
+    if (!onBar && v < thr - 3) {             // white -> dark: new bar
+      onBar = true;
+      if (bars == 0 || DegToCm(pos - lastBarEnd) > GROUP_GAP) {
+        if (groups < 10) groups++;
+      }
+      bars++;
+      groupBars[groups - 1]++;
+    }
+    if (onBar && v > thr + 3) {              // dark -> white: bar ended
+      onBar = false;
+      lastBarEnd = pos;
+    }
+    if (bars > 0 && !onBar && DegToCm(pos - lastBarEnd) > END_GAP) break;
+    if (DegToCm(pos) > 60) break;            // safety stop
+  }
+  Off(BOTH);
+  ms = CurrentTick() - t0;
+
+  // screen
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "BARS:");  NumOut(50, LCD_LINE1, bars);
+  TextOut(0, LCD_LINE2, "TIME ms:"); NumOut(50, LCD_LINE2, ms);
+  TextOut(0, LCD_LINE3, "GROUPS:"); NumOut(50, LCD_LINE3, groups);
+  s = "";
+  for (i = 0; i < groups; i++) s = s + NumToStr(groupBars[i]) + " ";
+  TextOut(0, LCD_LINE4, s);
+
+  // add result to the file
+  if (OpenFileAppend("Scaner.txt", size, fh) != NO_ERR)
+    CreateFile("Scaner.txt", 2048, fh);
+  txt = "bars=" + NumToStr(bars) + " time_ms=" + NumToStr(ms) + " groups: " + s;
+  WriteLnString(fh, txt, cnt);
+  CloseFile(fh);
+
+  // send to the other robot
+  if (BluetoothStatus(BT_LINE) == NO_ERR) {
+    SendRemoteNumber(BT_LINE, MAILBOX1, bars);
+    TextOut(0, LCD_LINE6, "Sent by BT");
+  } else {
+    TextOut(0, LCD_LINE6, "No BT robot");
+  }
+  until(ButtonPressed(BTNCENTER, false));
+}

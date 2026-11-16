@@ -1,0 +1,104 @@
+// Report 2 part 1 - Ultrasonic sensor (sonar)
+// Part A  SPEED:    reads the sensor 100 times, measures time per reading and
+//                   how often the value really changes (new measurement).
+// Part B  ACCURACY: put a box/book at the distance shown on screen
+//                   (measure from the FRONT of the sensor), press ENTER.
+//                   10 readings -> average, min, max saved.
+// Part C  FIELD OF VIEW: box at 50 cm, moved sideways by the shown amount.
+//                   When the sensor stops seeing it = edge of the beam.
+// Everything saved to sonar.txt
+
+#include "robot_config.h"
+
+int real[]  = {5, 10, 20, 30, 50, 75, 100, 150, 200};
+int sides[] = {0, 5, 10, 15, 20, 25, 30, 40};
+
+byte fh;
+unsigned int cnt;
+int avg, mn, mx;
+
+void Measure10()
+{
+  int i, d, sum = 0;
+  mn = 255; mx = 0;
+  for (i = 0; i < 10; i++) {
+    d = SensorUS(SONAR);
+    sum += d;
+    if (d < mn) mn = d;
+    if (d > mx) mx = d;
+    Wait(60);
+  }
+  avg = sum / 10;
+}
+
+string txt;
+
+task main()
+{
+  int i, changes = 0, last, d;
+  long tStart, ms;
+  SetSensorLowspeed(SONAR);
+  DeleteFile("sonar.txt");
+  CreateFile("sonar.txt", 2048, fh);
+
+  // ---- A: speed ----
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "A: SPEED TEST");
+  TextOut(0, LCD_LINE3, "move hand in");
+  TextOut(0, LCD_LINE4, "front, ENTER");
+  WaitEnter();
+  last = SensorUS(SONAR);
+  tStart = CurrentTick();
+  for (i = 0; i < 100; i++) {
+    d = SensorUS(SONAR);
+    if (d != last) changes++;
+    last = d;
+  }
+  ms = CurrentTick() - tStart;
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "100 reads ms:"); NumOut(80, LCD_LINE1, ms);
+  TextOut(0, LCD_LINE2, "changes:");      NumOut(80, LCD_LINE2, changes);
+  txt = "SPEED: 100 readings took " + NumToStr(ms) + " ms, value changed " + NumToStr(changes) + " times";
+  WriteLnString(fh, txt, cnt);
+  Wait(4000);
+
+  // ---- B: accuracy ----
+  WriteLnString(fh, "ACCURACY: real_cm;avg;min;max", cnt);
+  for (i = 0; i < 9; i++) {
+    ClearScreen();
+    TextOut(0, LCD_LINE1, "B: ACCURACY");
+    TextOut(0, LCD_LINE3, "Object at cm:");
+    NumOut(80, LCD_LINE3, real[i]);
+    TextOut(0, LCD_LINE5, "ENTER = measure");
+    while (!ButtonPressed(BTNCENTER, false)) {      // live value while placing
+      TextOut(0, LCD_LINE7, "now:        ");
+      NumOut(40, LCD_LINE7, SensorUS(SONAR));
+      Wait(100);
+    }
+    until(!ButtonPressed(BTNCENTER, false));
+    Measure10();
+    txt = NumToStr(real[i]) + ";" + NumToStr(avg) + ";" + NumToStr(mn) + ";" + NumToStr(mx);
+    WriteLnString(fh, txt, cnt);
+    PlayTone(660, 100);
+  }
+
+  // ---- C: field of view ----
+  WriteLnString(fh, "FIELD OF VIEW (object 50cm ahead): side_cm;avg", cnt);
+  for (i = 0; i < 8; i++) {
+    ClearScreen();
+    TextOut(0, LCD_LINE1, "C: FIELD OF VIEW");
+    TextOut(0, LCD_LINE2, "50cm ahead and");
+    TextOut(0, LCD_LINE3, "to the side cm:");
+    NumOut(0, LCD_LINE4, sides[i]);
+    TextOut(0, LCD_LINE6, "ENTER = measure");
+    WaitEnter();
+    Measure10();
+    txt = NumToStr(sides[i]) + ";" + NumToStr(avg);
+    WriteLnString(fh, txt, cnt);
+    PlayTone(660, 100);
+  }
+  CloseFile(fh);
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "Done - sonar.txt");
+  Wait(3000);
+}

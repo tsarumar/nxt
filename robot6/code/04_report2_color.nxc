@@ -1,0 +1,112 @@
+// Report 2 part 2 - Color sensor
+// Part A  SPEED:  time for 100 readings in color mode and in light mode.
+// Part B  COLORS: hold the sensor (about 1 cm high) over each colour shown,
+//                 ENTER -> colour number + raw red/green/blue values saved.
+// Part C  INTENSITY: over WHITE and BLACK paper, light value (0-100) with
+//                 red, green, blue lamp and with lamp off (= ambient light).
+// Part D  HEIGHT: light value over white at different heights.
+// Everything saved to color.txt
+
+#include "robot_config.h"
+
+string names[] = {"BLACK", "BLUE", "GREEN", "YELLOW", "RED", "WHITE"};
+int heights[]  = {0, 1, 2, 3, 5};
+
+byte fh;
+unsigned int cnt;
+
+void Prompt(string a, string b)
+{
+  ClearScreen();
+  TextOut(0, LCD_LINE2, a);
+  TextOut(0, LCD_LINE3, b);
+  TextOut(0, LCD_LINE6, "ENTER = measure");
+  WaitEnter();
+}
+
+void LampTest(string surface)
+{
+  string s = surface + ": ";
+  SetSensorColorRed(COLOR);   Wait(300); s = s + "red=" + NumToStr(Sensor(COLOR));
+  SetSensorColorGreen(COLOR); Wait(300); s = s + " green=" + NumToStr(Sensor(COLOR));
+  SetSensorColorBlue(COLOR);  Wait(300); s = s + " blue=" + NumToStr(Sensor(COLOR));
+  SetSensorColorNone(COLOR);  Wait(300); s = s + " off=" + NumToStr(Sensor(COLOR));
+  WriteLnString(fh, s, cnt);
+  PlayTone(660, 100);
+}
+
+string txt;
+
+task main()
+{
+  int i, k, x;
+  unsigned int raw[];
+  long tStart, ms1, ms2;
+
+  DeleteFile("color.txt");
+  CreateFile("color.txt", 3000, fh);
+
+  // ---- A: speed ----
+  SetSensorColorFull(COLOR);
+  Wait(300);
+  tStart = CurrentTick();
+  for (i = 0; i < 100; i++) x = Sensor(COLOR);
+  ms1 = CurrentTick() - tStart;
+  SetSensorColorRed(COLOR);
+  Wait(300);
+  tStart = CurrentTick();
+  for (i = 0; i < 100; i++) x = Sensor(COLOR);
+  ms2 = CurrentTick() - tStart;
+  txt = "SPEED: 100 reads color mode " + NumToStr(ms1) + " ms, light mode " + NumToStr(ms2) + " ms";
+  WriteLnString(fh, txt, cnt);
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "color ms:"); NumOut(60, LCD_LINE1, ms1);
+  TextOut(0, LCD_LINE2, "light ms:"); NumOut(60, LCD_LINE2, ms2);
+  Wait(3000);
+
+  // ---- B: colours ----
+  SetSensorColorFull(COLOR);
+  WriteLnString(fh, "COLORS: paper;detected(1blk 2blu 3grn 4yel 5red 6wht);rawR;rawG;rawB", cnt);
+  for (i = 0; i < 6; i++) {
+    Prompt("Put sensor over", names[i]);
+    for (k = 0; k < 3; k++) {             // 3 readings each
+      ReadSensorColorRaw(COLOR, raw);
+      x = Sensor(COLOR);
+      txt = names[i] + ";" + NumToStr(x) + ";" + NumToStr(raw[0]) + ";" + NumToStr(raw[1]) + ";" + NumToStr(raw[2]);
+      WriteLnString(fh, txt, cnt);
+      Wait(200);
+    }
+    ClearScreen();
+    TextOut(0, LCD_LINE2, "Detected:");
+    NumOut(60, LCD_LINE2, x);
+    PlayTone(660, 100);
+    Wait(1000);
+  }
+
+  // ---- C: intensity ----
+  WriteLnString(fh, "INTENSITY (0-100):", cnt);
+  Prompt("Put sensor over", "WHITE paper");
+  LampTest("WHITE");
+  Prompt("Put sensor over", "BLACK paper");
+  LampTest("BLACK");
+  Prompt("Lamp off test:", "cover the sensor");
+  LampTest("COVERED");
+
+  // ---- D: height ----
+  SetSensorColorRed(COLOR);
+  WriteLnString(fh, "HEIGHT over white: cm;light", cnt);
+  for (i = 0; i < 5; i++) {
+    ClearScreen();
+    TextOut(0, LCD_LINE2, "White, height cm:");
+    NumOut(0, LCD_LINE3, heights[i]);
+    TextOut(0, LCD_LINE6, "ENTER = measure");
+    WaitEnter();
+    txt = NumToStr(heights[i]) + ";" + NumToStr(Sensor(COLOR));
+    WriteLnString(fh, txt, cnt);
+    PlayTone(660, 100);
+  }
+  CloseFile(fh);
+  ClearScreen();
+  TextOut(0, LCD_LINE1, "Done - color.txt");
+  Wait(3000);
+}
