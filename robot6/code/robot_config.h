@@ -10,8 +10,8 @@
 #define COLOR  IN_3       // color sensor, looking down at the floor
 #define SONAR  IN_4       // ultrasonic sensor, looking forward
 
-#define WHEEL_D     5.6   // wheel diameter in cm   (fix with 00_calibrate)
-#define TURN_FACTOR 2.1   // motor degrees per 1 degree of robot turn (fix with 00_calibrate)
+#define WHEEL_D     2.8   // cm moved per motor turn / pi. Measured: 50 cm asked -> 25 cm driven (gears), so 5.6 * 25 / 50
+#define TURN_FACTOR 4.2   // motor degrees per 1 degree of robot turn. Measured: 360 asked -> 180 turned, so 2.1 * 2
 
 // --- small helpers used by most programs ---
 long CmToDeg(float cm)
