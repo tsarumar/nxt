@@ -1,6 +1,6 @@
 # Robot 6 - NXT programs and reports
 
-Omar Zid, Simão Nambi - Informatics in Robotics
+Omar Zid - Informatics in Robotics
 
 ## How to use on the lab computer
 
@@ -19,7 +19,7 @@ Names are short on purpose: the NXT only accepts names up to 15 characters.
 | 02_calibrate | 50 cm drive + full turn, to set WHEEL_D and TURN_FACTOR |
 | 03_basics | intro: buttons, sensors, 2 tasks, mutex, file |
 | 04_scanner360 | intro final task: 360 scan, file, screen map, go to free side, stop on red |
-| 05_motors | Report 1 extra motor test (optional) |
+| 05_motors | Report 1: motor angles at 4 powers + counter resets |
 | 06_sonar | Report 2: ultrasonic speed, accuracy, field of view |
 | 07_color | Report 2: color sensor speed, colours, intensity, height |
 | 08_ring | Project 1 |
@@ -27,4 +27,4 @@ Names are short on purpose: the NXT only accepts names up to 15 characters.
 | 10_obstacles | Project 3 |
 | 11_line_pid | Project 4 |
 
-Reports are in `reports/`. Report 1 was done separately.
+Reports are in `reports/`.
