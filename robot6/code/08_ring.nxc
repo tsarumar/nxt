@@ -74,9 +74,8 @@ task main()
 {
   byte fh;
   unsigned int cnt;
-  int turned, aimTurn, dist, d, i;
+  int turned, aimTurn, dist, i;
   long t0, startDeg, driven;
-  bool found;
 
   SetSensorLowspeed(SONAR);
   SetSensorColorFull(COLOR);
